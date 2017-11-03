@@ -7,7 +7,8 @@ const
 	express = require('express'),
 	bodyParser = require('body-parser'),
 	fs = require('fs'),
-	app = express().use(bodyParser.json());
+	app = express().use(bodyParser.json()),
+	fb = require('./fb_helper.js');
 
 app.listen(PORT, function() {
 	CONST = JSON.parse(fs.readFileSync("./secret.json", 'UTF-8'));
@@ -29,6 +30,7 @@ app.post('/webhook', (req, res) => {
       // will only ever contain one message, so we get index 0
       let webhookEvent = entry.messaging[0];
       console.log(webhookEvent);
+	  fb.processEvent(webhookEvent);
     });
 
     // Returns a '200 OK' response to all requests
