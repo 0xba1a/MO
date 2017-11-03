@@ -18,6 +18,8 @@
   "homepage": "https://github.com/kaba-official/MO#readme",
   "dependencies": {
     "body-parser": "^1.18.2",
-    "express": "^4.16.2"
+    "express": "^4.16.2",
+    "flat-file-db": "^1.0.0",
+    "https": "^1.0.0"
   }
 }

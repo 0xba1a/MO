@@ -23,6 +23,9 @@ app.post('/webhook', (req, res) => {
   // Checks this is an event from a page subscription
   if (body.object === 'page') {
 
+    // Returns a '200 OK' response to all requests
+    res.status(200).send('EVENT_RECEIVED');
+
     // Iterates over each entry - there may be multiple if batched
     body.entry.forEach(function(entry) {
 
@@ -32,9 +35,6 @@ app.post('/webhook', (req, res) => {
       console.log(webhookEvent);
 	  fb.processEvent(webhookEvent);
     });
-
-    // Returns a '200 OK' response to all requests
-    res.status(200).send('EVENT_RECEIVED');
   } else {
     // Returns a '404 Not Found' if event is not from a page subscription
     res.sendStatus(404);
