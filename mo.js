@@ -32,8 +32,8 @@ app.post('/webhook', (req, res) => {
       // Gets the message. entry.messaging is an array, but 
       // will only ever contain one message, so we get index 0
       let webhookEvent = entry.messaging[0];
-      console.log(webhookEvent);
-	  fb.processEvent(webhookEvent);
+      console.log(JSON.stringify(webhookEvent));
+	  fb.process_event(webhookEvent);
     });
   } else {
     // Returns a '404 Not Found' if event is not from a page subscription
