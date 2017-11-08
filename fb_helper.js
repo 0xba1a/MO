@@ -4,8 +4,12 @@ const https_sync = require('sync-request');
 
 var flatfile = require('flat-file-db');
 var db = flatfile.sync('./fox.db');
+
+var github = require('./github_helper.js');
+var util = require('./util.js')
+
 var CONST = JSON.parse(fs.readFileSync("./secret.json", 'UTF-8'));
-var url = "graph.facebook.com";
+var fb_url = "graph.facebook.com";
 var path = "/v2.6/me/messages?access_token=" + CONST.page_access_token;
 
 /** STAGES *
@@ -32,46 +36,44 @@ var path = "/v2.6/me/messages?access_token=" + CONST.page_access_token;
  */
 
 module.exports = {
-	"process_event" : function(event)
-	{
-		if (!db.has(event.sender.id)) {
-		    add_new_user(event.sender.id);
-		}
+    "process_event": function(event) {
+        if (!db.has(event.sender.id)) {
+            util.add_new_user(event.sender.id);
+        }
 
-		user = db.get(event.sender.id);
+        user = db.get(event.sender.id);
 
-		switch (user.stage) {
-			case "NEW":
-				send_plain_msg(event.sender.id, "Hi sir");
-			case "START_OVER":
-				/* get Github username */
-				get_github_username(event);
-				break;
-			case "CONVERSE":
-				break;
-			default:
-				delete_and_startover(event.sender.id);
-		}
-	}
+        switch (user.stage) {
+            case "NEW":
+                module.exports.send_plain_msg(event.sender.id, "Hi sir");
+            case "START_OVER":
+                /* get Github username */
+                get_github_username(event);
+                break;
+            case "CONVERSE":
+				converse(event);
+                break;
+            default:
+                util.delete_and_startover(event.sender.id);
+        }
+    },
+
+    "send_plain_msg": function(id, msg) {
+        var res = {};
+        add_recipient(res, id);
+        add_msg(res, msg);
+        send_post_req(fb_url, res);
+    }
 };
 
-function delete_and_startover(user_id)
+function converse(event)
 {
-	var user;
-
-	if (!db.has(user_id)) {
-		/* Not possible */
-		return;
-	} else {
-		user = db.get(user_id);
+	/* Test purpose */
+	switch (event.message.text) {
+		case "test_get_my_repo":
+			github.get_my_repo();
+			break;
 	}
-
-	var msg = "Sorry sir. I forget you. Lets startover";
-	send_plain_msg(user_id, msg);
-
-	user.stage = "START_OVER";
-	msg = "Hii sir";
-	send_plain_msg(user_id, msg);
 }
 
 function get_github_username(event)
@@ -90,67 +92,29 @@ function get_github_username(event)
 
 	switch (user.state) {
 		case "NEW":
-			msg = "please provide your Github username";
+		    msg = "please provide your Github username";
 		    user.context = "WAITING_FOR_GITHUB_UNAME";
 		    user.state = "ASKED";
+			db.put(sender_id, user);
 		    break;
 		case "ASKED":
 		case "NOT_FOUND":
 			var username = event.message.text;
-			if (verify_and_add_user(username)) {
+			if (github.verify_user(username)) {
+				util.add_username(username);
 				msg = "I have successfully identified you";
 				user.username = username;
 				user.stage = "CONVERSE";
 				user.context = user.state = "";
+				db.put(sender_id, user);
 			} else {
 				msg = "Sorry. I can't find you sir. Please give proper username";
 				user.state = "NOT_FOUND";
+				db.put(sender_id, user);
 			}
 	}
 
-	send_plain_msg(sender_id, msg);
-}
-
-function verify_and_add_user(username)
-{
-	var path = "/users/" + username;
-	var res = github_get_req(path);
-	if (res != null) {
-	    return true;
-	} else {
-	    return false;
-	}
-}
-
-function github_get_req(path)
-{
-	var option = {
-		host : "api.github.com",
-		path : path,
-		method : "GET"
-	};
-
-	var res = https_sync("GET", "https://api.github.com", option);
-
-	if (res.statusCode == 200) {
-		return true;
-	} else {
-		return false;
-	}
-
-	//req.on("error") {
-		//return null;
-	//}
-
-	//req.on("end");
-}
-
-function send_plain_msg(id, msg)
-{
-	var res = {};
-	add_recipient(res, id);
-	add_msg(res, msg);
-	send_post_req(url, res);
+	module.exports.send_plain_msg(sender_id, msg);
 }
 
 function send_response(event)
@@ -169,18 +133,6 @@ function send_response(event)
 	}
 
 	send_post_req(url, response);
-}
-
-function add_recipient(response, recipient)
-{
-	response.recipient = {};
-	response.recipient.id = recipient;
-}
-
-function add_msg(response, message)
-{
-	response.message = {};
-	response.message.text = message;
 }
 
 function send_post_req(url, message)
@@ -208,19 +160,4 @@ function send_post_req(url, message)
 
 	req.write(JSON.stringify(message));
 	req.end();
-}
-
-function add_new_user(userId)
-{
-	/* else add this new user */
-	var newEmptyObject = {
-		"username" : "",
-		"repos" : "[]",
-		"stage" : "NEW",
-		"context" : "WAITING_FOR_GITHUB_USERNAME",
-		"state" : "NEW"
-	};
-
-	db.put(userId, newEmptyObject);
-	console.log("new user " + userId + " added");
 }
