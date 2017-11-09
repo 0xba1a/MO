@@ -2,9 +2,6 @@ const fs = require('fs');
 const https = require('https');
 const https_sync = require('sync-request');
 
-var flatfile = require('flat-file-db');
-var db = flatfile.sync('./fox.db');
-
 var util = require('./util.js')
 
 var CONST = JSON.parse(fs.readFileSync("./secret.json", 'UTF-8'));
@@ -43,22 +40,30 @@ function github_get_req(path)
 }
 
 /*** Test Functions ***/
-function test_get_my_repo() {
+function test_get_my_repo()
+{
 	console.log("Starting test_get_my_repo");
+
+	var username = CONST.github_username;
+	var passw = CONST.github_token;
+	var auth = 'Basic ' + new Buffer(username + ':' + passw).toString('base64');
 
 	var option = {
 		host : "api.github.com",
 		path : "/user/repos",
-		method : "GET"
+		method : "GET",
 		headers : {
-			"Authorization" : "token " + CONST.github_token
+			'Authorization' : auth,
+			'User-Agent': 'curl/7.47.0',
+			'Accept': '*/*'
 		}
 	};
 
 	var res = https_sync("GET", "https://api.github.com", option);
 
 	if (res.statusCode == 200) {
-		console.log(res.getBody());
+		console.log(res.getBody('utf8'));
 	} else {
 		console.log("Error: " + res.statusCode);
+	}
 }

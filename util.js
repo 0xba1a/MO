@@ -14,16 +14,17 @@ var path = "/v2.6/me/messages?access_token=" + CONST.page_access_token;
 
 module.exports = {
 
-    "add_new_user": function(userId) {
+    "add_new_user": function(user_id) {
         var newEmptyObject = {
+			"user_id": user_id,
             "username": "",
             "repos": "[]",
             "stage": "NEW",
             "context": "WAITING_FOR_GITHUB_USERNAME",
             "state": "NEW"
         };
-        db.put(userId, newEmptyObject);
-        console.log("new user " + userId + " added");
+		module.exports.update_db(user_id, newEmptyObject);
+        console.log("new user " + user_id + " added");
     },
 
     "delete_and_startover": function(user_id) {
@@ -52,5 +53,19 @@ module.exports = {
     "add_msg": function(response, message) {
         response.message = {};
         response.message.text = message;
-    }
+    },
+
+	"add_username": function(user, username) {
+		user.username = username;
+		module.exports.update_db(user.user_id, user);
+	},
+
+	"update_db": function(id, object) {
+		console.log(id);
+		console.log(JSON.stringify(object));
+		//db.del(id);
+		db.put(id, object);
+	}
 };
+
+module.exports.db = db;

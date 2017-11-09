@@ -2,9 +2,6 @@ const fs = require('fs');
 const https = require('https');
 const https_sync = require('sync-request');
 
-var flatfile = require('flat-file-db');
-var db = flatfile.sync('./fox.db');
-
 var github = require('./github_helper.js');
 var util = require('./util.js')
 
@@ -14,8 +11,9 @@ var path = "/v2.6/me/messages?access_token=" + CONST.page_access_token;
 
 /** STAGES *
  * 1. NEW
- * 2. CONVERSE
- * 3. START_OVER
+ * 2. GITHUB_INIT
+ * 3. CONVERSE
+ * 4. START_OVER
  */
 
 /** CONTEXT & STATES *
@@ -37,17 +35,19 @@ var path = "/v2.6/me/messages?access_token=" + CONST.page_access_token;
 
 module.exports = {
     "process_event": function(event) {
-        if (!db.has(event.sender.id)) {
+        if (!util.db.has(event.sender.id)) {
             util.add_new_user(event.sender.id);
         }
 
-        user = db.get(event.sender.id);
+        var user = util.db.get(event.sender.id);
 
         switch (user.stage) {
             case "NEW":
                 module.exports.send_plain_msg(event.sender.id, "Hi sir");
+			case "GITHUB_INIT":
             case "START_OVER":
                 /* get Github username */
+				//TODO: delay this message
                 get_github_username(event);
                 break;
             case "CONVERSE":
@@ -60,8 +60,8 @@ module.exports = {
 
     "send_plain_msg": function(id, msg) {
         var res = {};
-        add_recipient(res, id);
-        add_msg(res, msg);
+        util.add_recipient(res, id);
+        util.add_msg(res, msg);
         send_post_req(fb_url, res);
     }
 };
@@ -83,8 +83,8 @@ function get_github_username(event)
 	var sender_id = event.sender.id;
 	var msg;
 	
-	if (db.has(sender_id)) {
-	    user = db.get(sender_id);
+	if (util.db.has(sender_id)) {
+	    user = util.db.get(sender_id);
 	} else {
 		// FATAL!
 		return;
@@ -93,24 +93,25 @@ function get_github_username(event)
 	switch (user.state) {
 		case "NEW":
 		    msg = "please provide your Github username";
+			user.stage = "GITHUB_INIT";
 		    user.context = "WAITING_FOR_GITHUB_UNAME";
 		    user.state = "ASKED";
-			db.put(sender_id, user);
+			util.update_db(sender_id, user);
 		    break;
 		case "ASKED":
 		case "NOT_FOUND":
 			var username = event.message.text;
 			if (github.verify_user(username)) {
-				util.add_username(username);
+				util.add_username(user, username);
 				msg = "I have successfully identified you";
 				user.username = username;
 				user.stage = "CONVERSE";
 				user.context = user.state = "";
-				db.put(sender_id, user);
+				util.update_db(sender_id, user);
 			} else {
 				msg = "Sorry. I can't find you sir. Please give proper username";
 				user.state = "NOT_FOUND";
-				db.put(sender_id, user);
+				util.update_db(sender_id, user);
 			}
 	}
 
