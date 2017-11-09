@@ -78,12 +78,14 @@ function converse(event)
 	var entities = event.message.nlp.entities;
 
 	for (entity in entities) {
+		if (confidence > entity.confidence) {
+			continue;
+		}
+
 		switch (entity) {
 			case "greetings":
-				if (confidence < entity.greetings[0].confidence) {
-					confidence = entity.greetings[0].confidence;
-					intent = "greetings";
-				}
+				confidence = entity.confidence;
+				intent = entity;
 				break;
 		}
 	}
