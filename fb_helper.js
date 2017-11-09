@@ -62,12 +62,38 @@ module.exports = {
         var res = {};
         util.add_recipient(res, id);
         util.add_msg(res, msg);
-        send_post_req(fb_url, res);
+        send_post_req(res);
     }
 };
 
 function converse(event)
 {
+	/* Work on NLP */
+	var confidence = 0;
+	var intent;
+	var action;
+	var action_on;
+	var msg = event.message.text;
+	var sender_id = event.sender.id;
+	var entities = event.message.nlp.entities;
+
+	for (entity in entities) {
+		switch (entity) {
+			case "greetings":
+				if (confidence < entity.greetings[0].confidence) {
+					confidence = entity.greetings[0].confidence;
+					intent = "greetings";
+				}
+				break;
+		}
+	}
+
+	switch (intent) {
+		case "greetings":
+			send_greetings(sender_id, msg);
+			break;
+	}
+
 	/* Test purpose */
 	switch (event.message.text) {
 		case "test_get_my_repo":
@@ -118,6 +144,11 @@ function get_github_username(event)
 	module.exports.send_plain_msg(sender_id, msg);
 }
 
+function send_greetings(id, msg)
+{
+	module.exports.send_plain_msg(id, "Hello Sir");
+}
+
 function send_response(event)
 {
 	var response = {};
@@ -133,15 +164,15 @@ function send_response(event)
 
 	}
 
-	send_post_req(url, response);
+	send_post_req(response);
 }
 
-function send_post_req(url, message)
+function send_post_req(message)
 {
 	console.log("sending request: " + JSON.stringify(message));
 
 	var options = {
-		hostname : url,
+		hostname : fb_url,
 		port : 443,
 		path : path,
 		method : 'POST',
