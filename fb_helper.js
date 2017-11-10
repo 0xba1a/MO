@@ -32,6 +32,17 @@ var path = "/v2.6/me/messages?access_token=" + CONST.page_access_token;
  * 	b. ASKED
  * 	c. NOT_FOUND
  */
+var yes_no_quick_reply = {
+    [{
+        "content_type": "text",
+        "title": "no",
+        "payload": "no"
+    }, {
+        "content_type": "text",
+        "title": "yes",
+        "payload": "yes"
+    }]
+};
 
 module.exports = {
     "process_event": function(event) {
@@ -59,11 +70,23 @@ module.exports = {
     },
 
     "send_plain_msg": function(id, msg) {
+		//TODO: Add message type. Mandatory from May/2018
         var res = {};
         util.add_recipient(res, id);
         util.add_msg(res, msg);
         send_post_req(res);
-    }
+    },
+
+	"send_quick_reply": function(id, msg, quick_replies) {
+		var res = {};
+		util.add_recipient(res, id);
+		util.add_quick_reply(res, msg, quick_replies);
+		send_post_req(res);
+	}
+
+	"not_understood": function(id) {
+		module.exports.send_plain_msg(id, "Sorry. I'm not familiar with your sofisticated language");
+	}
 };
 
 function converse(event)
@@ -71,32 +94,76 @@ function converse(event)
 	/* Work on NLP */
 	var confidence = 0;
 	var intent;
-	var action;
+	//var action;
 	var action_on;
 	var msg = event.message.text;
 	var sender_id = event.sender.id;
 	var entities = event.message.nlp.entities;
+	var user = util.db.get(sender_id);
 
-	for (entity in entities) {
-		if (confidence > entity.confidence) {
-			continue;
-		}
+	if (user == null) {
+		util.delete_and_startover(id);
+		return;
+	}
 
-		switch (entity) {
-			case "greetings":
-				confidence = entity.confidence;
-				intent = entity;
+	if (user.context == "") {
+
+		for (entity in entities) {
+	        //if (confidence > entity.confidence) {
+	        //continue;
+	        //}
+
+	        switch (entity) {
+	            case "greetings":
+	                //confidence = entity.confidence;
+	                intent = entity;
+	                break;
+	            case "action":
+	                intent = entity.value;
+	                break;
+	            case "agenda_entry":
+	                action_on = entity.value;
+	                break;
+	        }
+	    }
+
+	    switch (intent) {
+	        case "greetings":
+	            send_greetings(sender_id, msg);
+	            break;
+	        case "create":
+	            do_create(sender_id, action_on, msg);
+	            break;
+	        case "delete":
+	            do_delete(sender_id, action_on);
+	            break;
+	        case "change":
+	            do_change(sender_id, action_on);
+	            break;
+			case "cancel":
+				do_cancel(sender_id);
 				break;
+	    }
+	} else {
+		for (entity in entities) {
+			if ((entity == "action") && (entity.value == "cancel")) {
+				do_cancel();
+				return;
+			}
+		}
+
+		switch (user.context) {
+			case "CREATE":
+				do_create(sender_id, msg.toLowerCase());
+				break;
+			case "REPO":
+				create_repo(sender_id, msg.toLowerCase());
+				break;
+			default:
 		}
 	}
 
-	switch (intent) {
-		case "greetings":
-			send_greetings(sender_id, msg);
-			break;
-	}
-
-	/* Test purpose */
+	/* Testing purpose only */
 	switch (event.message.text) {
 		case "test_get_my_repo":
 			github.get_my_repo();
@@ -146,6 +213,101 @@ function get_github_username(event)
 	module.exports.send_plain_msg(sender_id, msg);
 }
 
+/* Cancel current operation */
+function do_cancel(id)
+{
+	var user = util.db.get(id);
+	if (user == null) {
+		util.delete_and_startover(id);
+		return;
+	}
+
+	user.context = user.stage = "";
+}
+
+/* Create related functions */
+function do_create(id, action_on, msg)
+{
+	switch (action_on) {
+		case "":
+			get_what_to_create(id);
+			break;
+		case "repo":
+			create_repo(id, msg);
+		case "issue":
+			create_issue(id);
+		case "comment":
+			create_comment(id);
+		default:
+			module.exports.not_understood(id);
+	}
+}
+
+function get_what_to_create(id)
+{
+	var user = util.db.get(id);
+	if (user == null) {
+		util.delete_and_startover(id);
+		return;
+	}
+
+	user.context = "CREATE";
+	user.stage = "ASKED";
+	send_plain_msg(id, "create what?");
+}
+
+function create_repo(id, msg)
+{
+	var user = util.db.get(id);
+	if (user == null) {
+		util.delete_and_startover(id);
+		return;
+	}
+
+	/* create repo sequence */
+	switch (user.stage) {
+		case "":
+			user.context = "REPO";
+			user.stage = "NAME";
+			module.exports.send_plain_msg(id, "repo name please");
+			break;
+		case "NAME":
+			user.stage = "DESCRIPTION";
+			user.repo = {"name": msg};
+			module.exports.send_plain_msg(id, "What description I should add?");
+			break;
+		case "DESCRIPTION":
+			user.stage = "CREATE_CONFIRMATION";
+			user.repo.description = msg;
+			var confirm_msg = "Do you want to create a repo with name " + user.repo.name;
+			//module.exports.send_plain_msg(id, confirm_msg);
+			setTimeout(module.exports.send_quick_reply(id, confirm_msg, yes_no_quick_reply), 1000);
+			break;
+		case "CREATE_CONFIRMATION":
+			if (msg == "yes") {
+				github.create_repo(id);
+			} else {
+				do_cancel(id);
+			}
+			break;
+	}
+}
+
+
+do_delete(sender_id, action_on)
+{
+}
+do_change(sender_id, action_on)
+{
+}
+create_issue(id)
+{
+}
+create_comment(id)
+{
+}
+
+/* utility functions */
 function send_greetings(id, msg)
 {
 	module.exports.send_plain_msg(id, "Hello Sir");

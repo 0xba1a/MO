@@ -55,6 +55,11 @@ module.exports = {
         response.message.text = message;
     },
 
+	"add_quick_reply": function(response, message, quick_replies) {
+		module.exports.add_msg(response, message);
+		response.message.quick_replies = quick_replies;
+	}
+
 	"add_username": function(user, username) {
 		user.username = username;
 		module.exports.update_db(user.user_id, user);
