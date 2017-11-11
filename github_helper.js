@@ -3,7 +3,7 @@ const https = require('https');
 const https_sync = require('sync-request');
 
 var util = require('./util.js');
-var fb = require("./fb_helper.js');
+var fb = require('./fb_helper.js');
 
 var CONST = JSON.parse(fs.readFileSync("./secret.json", 'UTF-8'));
 
@@ -62,7 +62,8 @@ function github_post_req(id, path, obj)
 		var data = "";
 
 		if (err) {
-			console.log("github_post_req: " + err);
+			console.log("github_post_req - error :" + err);
+			console.log("github_post_req - error :" + JSON.stringify(err));
 			return;
 		}
 
