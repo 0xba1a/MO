@@ -41,7 +41,8 @@ module.exports = {
 	}
 };
 
-function github_post_req(id, path, obj) {
+function github_post_req(id, path, obj)
+{
     var username = CONST.github_username;
     var passw = CONST.github_token;
     var auth = 'Basic ' + new Buffer(username + ':' + passw).toString('base64');
@@ -49,7 +50,7 @@ function github_post_req(id, path, obj) {
     var options = {
         host: "api.github.com",
         path: path,
-        method: "PATH",
+        method: "POST",
         headers: {
             'Authorization': auth,
             'User-Agent': 'curl/7.47.0',
