@@ -41,63 +41,71 @@ module.exports = {
 	}
 };
 
-function github_post_req(id, path, obj)
-{
-	var username = CONST.github_username;
-	var passw = CONST.github_token;
-	var auth = 'Basic ' + new Buffer(username + ':' + passw).toString('base64');
+function github_post_req(id, path, obj) {
+    var username = CONST.github_username;
+    var passw = CONST.github_token;
+    var auth = 'Basic ' + new Buffer(username + ':' + passw).toString('base64');
 
-	var options = {
-		host : "api.github.com",
-		path : path,
-		method : "PATH",
-		headers : {
-			'Authorization' : auth,
-			'User-Agent': 'curl/7.47.0',
-			'Accept': '*/*'
-		}
-	};
+    var options = {
+        host: "api.github.com",
+        path: path,
+        method: "PATH",
+        headers: {
+            'Authorization': auth,
+            'User-Agent': 'curl/7.47.0',
+            'Accept': '*/*'
+        }
+    };
 
-	var req = https.request(options, function(err, res) {
-		var data = "";
+    var req = https.request(options, function(err, res, data) {
+        //var data = "";
 
-		if (err) {
-			console.error("github_post_req - error :", err);
-			return;
-		}
+        if (err) {
+            console.error("github_post_req - error :", err);
+            return;
+        }
 
-		res.on('data', function(chunk) {
-			data += chunk;
-		});
+		console.log("github - https.request: " + data);
+        var json_obj = JSON.parse(data);
+        user.repo.github_url = json_obj.github_url;
+        util.update_db(this.id, user);
 
-		res.on('end', function() {
-			console.log("github_post_req - data: " + data);
-		
-			var user = util.db.get(this.id);
-			if (user == null) {
-				fb.delete_and_startover(this.id);
-				return;
-			}
+        var msg = "repo created successfully. you can clone it from " + json_obj.github_url;
+        fb.send_plain_msg(this.id, msg);
 
-			var json_obj = JSON.parse(data);
-			user.repo.github_url = json_obj.github_url;
-			util.update_db(this.id, user);
+        //res.on('data', function(chunk) {
+        //data += chunk;
+        //});
 
-			var msg = "repo created successfully. you can clone it from " + json_obj.github_url;
-			fb.send_plain_msg(this.id, msg);
+        //res.on('end', function() {
+        //console.log("github_post_req - data: " + data);
 
-		}.bind( {"id": this.id}  ));
+        //var user = util.db.get(this.id);
+        //if (user == null) {
+        //fb.delete_and_startover(this.id);
+        //return;
+        //}
 
-	}.bind( {"id": id} ));
+        //var json_obj = JSON.parse(data);
+        //user.repo.github_url = json_obj.github_url;
+        //util.update_db(this.id, user);
 
-	req.on('error', function(e) {
-		console.log(`problem with request: ${e.message}`);
-	});
+        //var msg = "repo created successfully. you can clone it from " + json_obj.github_url;
+        //fb.send_plain_msg(this.id, msg);
 
-	req.write(JSON.stringify(obj));
-	req.end();
+        //}.bind( {"id": this.id}  ));
+
+    }.bind({
+        "id": id
+    }));
+
+    req.on('error', function(e) {
+        console.log(`problem with request: ${e.message}`);
+    });
+
+    req.write(JSON.stringify(obj));
+    req.end();
 }
-
 
 function github_get_req(path)
 {
