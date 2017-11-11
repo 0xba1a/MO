@@ -331,7 +331,8 @@ function create_repo(id, msg)
 			util.update_db(id, user);
 			var confirm_msg = "Do you want to create a repo with name " + user.repo.name;
 			//module.exports.send_plain_msg(id, confirm_msg);
-			setTimeout(module.exports.send_quick_reply(id, confirm_msg, yes_no_quick_reply), 1000);
+			//setTimeout(module.exports.send_quick_reply(id, confirm_msg, yes_no_quick_reply), 1000);
+			module.exports.send_quick_reply(id, confirm_msg, yes_no_quick_reply);
 			break;
 		case "CREATE_CONFIRMATION":
 			user.context = user.state = "";

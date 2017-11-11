@@ -62,7 +62,7 @@ function github_post_req(id, path, obj)
 		var data = "";
 
 		if (err) {
-			console.error("github_post_req - error :" + err);
+			console.error("github_post_req - error :", err);
 			return;
 		}
 
