@@ -10,7 +10,8 @@ module.exports = {
     "verify_user": function(username) {
         var path = "/users/" + username;
         var res = github_get_req(path);
-		if (res.login == username) {
+		//console.log("res: " + JSON.stringify(res));
+		if ((res != null) && (res.login == username)) {
             return true;
         } else {
             return false;
@@ -18,6 +19,7 @@ module.exports = {
     },
 
 	"create_repo": function(id) {
+		console.log("Github - create_repo: ");
 	},
 	
 	"get_my_repo" : function() {
@@ -27,17 +29,22 @@ module.exports = {
 
 function github_get_req(path)
 {
+	var username = CONST.github_username;
+	var passw = CONST.github_token;
+	var auth = 'Basic ' + new Buffer(username + ':' + passw).toString('base64');
+
 	var option = {
 		host : "api.github.com",
 		path : path,
-		method : "GET"
+		method : "GET",
 		headers : {
 			'Authorization' : auth,
+			'User-Agent': 'curl/7.47.0',
 			'Accept': '*/*'
 		}
 	};
 
-	var res = https_sync("GET", "https://api.github.com", option);
+	var res = https_sync("GET", "https://api.github.com" + path, option);
 
 	if (res.statusCode == 200) {
 		return JSON.parse(res.getBody('utf8'));

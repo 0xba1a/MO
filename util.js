@@ -27,24 +27,6 @@ module.exports = {
         console.log("new user " + user_id + " added");
     },
 
-    "delete_and_startover": function(user_id) {
-        var user;
-
-        if (!db.has(user_id)) {
-            /* Not possible */
-            return;
-        } else {
-            user = db.get(user_id);
-        }
-
-        var msg = "Sorry sir. I forget you. Lets startover";
-        send_plain_msg(user_id, msg);
-
-        user.stage = "START_OVER";
-        msg = "Hii sir";
-        send_plain_msg(user_id, msg);
-    },
-
     "add_recipient": function(response, recipient) {
         response.recipient = {};
         response.recipient.id = recipient;
@@ -58,7 +40,7 @@ module.exports = {
 	"add_quick_reply": function(response, message, quick_replies) {
 		module.exports.add_msg(response, message);
 		response.message.quick_replies = quick_replies;
-	}
+	},
 
 	"add_username": function(user, username) {
 		user.username = username;
