@@ -92,14 +92,16 @@ function github_post_req(id, path, obj)
             util.update_db(this.id, user);
 
             var msg = "repo created successfully. you can clone it from " + json_obj.github_url;
-            fb.send_plain_msg(this.id, msg);
+            this.fb.send_plain_msg(this.id, msg);
 
         }.bind({
-            "id": this.id
+            "id": this.id,
+			"fb": this.fb
         }));
 
     }.bind({
-        "id": id
+        "id": id,
+		"fb": fb
     }));
 
     req.on('error', function(e) {
