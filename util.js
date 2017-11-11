@@ -5,11 +5,8 @@ const https_sync = require('sync-request');
 var flatfile = require('flat-file-db');
 var db = flatfile.sync('./fox.db');
 
-//var github = require('./github_helper.js');
-//var util = require('./util.js')
-
 var CONST = JSON.parse(fs.readFileSync("./secret.json", 'UTF-8'));
-var url = "graph.facebook.com";
+var fb_url = "graph.facebook.com";
 var path = "/v2.6/me/messages?access_token=" + CONST.page_access_token;
 
 module.exports = {
@@ -55,7 +52,7 @@ module.exports = {
     },
 
     /* Facebook communication functions */
-    "send_post_req": function(message) i {
+    "send_post_req": function(message) {
         console.log("sending request: " + JSON.stringify(message));
 
         var options = {

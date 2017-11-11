@@ -87,10 +87,10 @@ function github_post_req(id, path, obj)
             }
 
             var json_obj = JSON.parse(data);
-            user.repo.github_url = json_obj.github_url;
+            user.repo.github_url = json_obj.git_url;
             util.update_db(this.id, user);
 
-            var msg = "repo created successfully. you can clone it from " + json_obj.github_url;
+            var msg = "repo created successfully. you can clone it from " + json_obj.git_url;
             util.send_plain_msg(this.id, msg);
 
         }.bind({
