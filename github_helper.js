@@ -57,35 +57,15 @@ function github_post_req(id, path, obj) {
         }
     };
 
-    var req = https.request(options, function(err, res, data) {
-        //var data = "";
+    var req = https.request(options, function(res, err) {
+        var data = "";
 
         if (err) {
-            console.error("github_post_req - error :", err);
+            console.error("github_post_req - error :" + err);
             return;
         }
 
-		console.log("github - https.request: " + data);
-        var json_obj = JSON.parse(data);
-        user.repo.github_url = json_obj.github_url;
-        util.update_db(this.id, user);
-
-        var msg = "repo created successfully. you can clone it from " + json_obj.github_url;
-        fb.send_plain_msg(this.id, msg);
-
-        //res.on('data', function(chunk) {
-        //data += chunk;
-        //});
-
-        //res.on('end', function() {
-        //console.log("github_post_req - data: " + data);
-
-        //var user = util.db.get(this.id);
-        //if (user == null) {
-        //fb.delete_and_startover(this.id);
-        //return;
-        //}
-
+        //console.log("github - https.request: " + data);
         //var json_obj = JSON.parse(data);
         //user.repo.github_url = json_obj.github_url;
         //util.update_db(this.id, user);
@@ -93,7 +73,29 @@ function github_post_req(id, path, obj) {
         //var msg = "repo created successfully. you can clone it from " + json_obj.github_url;
         //fb.send_plain_msg(this.id, msg);
 
-        //}.bind( {"id": this.id}  ));
+        res.on('data', function(chunk) {
+            data += chunk;
+        });
+
+        res.on('end', function() {
+            console.log("github_post_req - data: " + data);
+
+            var user = util.db.get(this.id);
+            if (user == null) {
+                fb.delete_and_startover(this.id);
+                return;
+            }
+
+            var json_obj = JSON.parse(data);
+            user.repo.github_url = json_obj.github_url;
+            util.update_db(this.id, user);
+
+            var msg = "repo created successfully. you can clone it from " + json_obj.github_url;
+            fb.send_plain_msg(this.id, msg);
+
+        }.bind({
+            "id": this.id
+        }));
 
     }.bind({
         "id": id
