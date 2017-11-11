@@ -3,7 +3,6 @@ const https = require('https');
 const https_sync = require('sync-request');
 
 var util = require('./util.js');
-var fb = require('./fb_helper.js');
 
 var CONST = JSON.parse(fs.readFileSync("./secret.json", 'UTF-8'));
 
@@ -83,7 +82,7 @@ function github_post_req(id, path, obj)
 
             var user = util.db.get(this.id);
             if (user == null) {
-                fb.delete_and_startover(this.id);
+                util.delete_and_startover(this.id);
                 return;
             }
 
@@ -92,16 +91,14 @@ function github_post_req(id, path, obj)
             util.update_db(this.id, user);
 
             var msg = "repo created successfully. you can clone it from " + json_obj.github_url;
-            this.fb.send_plain_msg(this.id, msg);
+            util.send_plain_msg(this.id, msg);
 
         }.bind({
-            "id": this.id,
-			"fb": this.fb
+            "id": this.id
         }));
 
     }.bind({
-        "id": id,
-		"fb": fb
+        "id": id
     }));
 
     req.on('error', function(e) {

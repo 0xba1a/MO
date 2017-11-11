@@ -52,7 +52,7 @@ module.exports = {
 
         switch (user.stage) {
             case "NEW":
-                module.exports.send_plain_msg(event.sender.id, "Hi sir");
+                util.send_plain_msg(event.sender.id, "Hi sir");
 			case "GITHUB_INIT":
             case "START_OVER":
                 /* get Github username */
@@ -63,47 +63,8 @@ module.exports = {
 				converse(event);
                 break;
             default:
-                module.exports.delete_and_startover(event.sender.id);
+                util.delete_and_startover(event.sender.id);
         }
-    },
-
-    "send_plain_msg": function(id, msg) {
-		//TODO: Add message type. Mandatory from May/2018
-        var res = {};
-        util.add_recipient(res, id);
-        util.add_msg(res, msg);
-        send_post_req(res);
-    },
-
-	"send_quick_reply": function(id, msg, quick_replies) {
-		var res = {};
-		util.add_recipient(res, id);
-		util.add_quick_reply(res, msg, quick_replies);
-		send_post_req(res);
-	},
-
-	"not_understood": function(id) {
-		module.exports.send_plain_msg(id, "Sorry. I'm not familiar with your sofisticated language");
-	},
-
-    "delete_and_startover": function(user_id) {
-        var user;
-
-        if (!util.db.has(user_id)) {
-            /* Not possible */
-            return;
-        } else {
-            user = util.db.get(user_id);
-        }
-
-        var msg = "Sorry sir. I forget you. Lets startover";
-        module.exports.send_plain_msg(user_id, msg);
-
-        user.stage = "START_OVER";
-		user.context = user.state = "NEW";
-		util.update_db(user_id, user);
-        msg = "Hii sir";
-        module.exports.send_plain_msg(user_id, msg);
     }
 };
 
@@ -121,7 +82,7 @@ function converse(event)
 
 	if (user == null) {
 		console.log("converse - lost user");
-		module.exports.delete_and_startover(sender_id);
+		util.delete_and_startover(sender_id);
 		return;
 	}
 
@@ -234,7 +195,7 @@ function get_github_username(event)
 			}
 	}
 
-	module.exports.send_plain_msg(sender_id, msg);
+	util.send_plain_msg(sender_id, msg);
 }
 
 /* Cancel current operation */
@@ -242,7 +203,7 @@ function do_cancel(id)
 {
 	var user = util.db.get(id);
 	if (user == null) {
-		module.exports.delete_and_startover(id);
+		util.delete_and_startover(id);
 		return;
 	}
 
@@ -256,7 +217,7 @@ function do_create(id, action_on, msg)
 
 	var user = util.db.get(id);
 	if (user == null) {
-		module.exports.delete_and_startover(id);
+		util.delete_and_startover(id);
 		return;
 	}
 
@@ -285,7 +246,7 @@ function do_create(id, action_on, msg)
 		default:
 			user.context = user.state = "";
 			util.update_db(id, user);
-			module.exports.not_understood(id);
+			util.not_understood(id);
 	}
 }
 
@@ -293,14 +254,14 @@ function get_what_to_create(id)
 {
 	var user = util.db.get(id);
 	if (user == null) {
-		module.exports.delete_and_startover(id);
+		util.delete_and_startover(id);
 		return;
 	}
 
 	user.context = "CREATE";
 	user.state = "ASKED";
 	util.update_db(id, user);
-	module.exports.send_plain_msg(id, "create what?");
+	util.send_plain_msg(id, "create what?");
 }
 
 function create_repo(id, msg)
@@ -308,7 +269,7 @@ function create_repo(id, msg)
 	console.log("create_repo - msg : " + msg);
 	var user = util.db.get(id);
 	if (user == null) {
-		module.exports.delete_and_startover(id);
+		util.delete_and_startover(id);
 		return;
 	}
 
@@ -317,22 +278,22 @@ function create_repo(id, msg)
 		case "":
 			user.state = "NAME";
 			util.update_db(id, user);
-			module.exports.send_plain_msg(id, "repo name please");
+			util.send_plain_msg(id, "repo name please");
 			break;
 		case "NAME":
 			user.state = "DESCRIPTION";
 			user.repo = {"name": msg};
 			util.update_db(id, user);
-			module.exports.send_plain_msg(id, "What description I should add?");
+			util.send_plain_msg(id, "What description I should add?");
 			break;
 		case "DESCRIPTION":
 			user.state = "CREATE_CONFIRMATION";
 			user.repo.description = msg;
 			util.update_db(id, user);
 			var confirm_msg = "Do you want to create a repo with name " + user.repo.name;
-			//module.exports.send_plain_msg(id, confirm_msg);
-			//setTimeout(module.exports.send_quick_reply(id, confirm_msg, yes_no_quick_reply), 1000);
-			module.exports.send_quick_reply(id, confirm_msg, yes_no_quick_reply);
+			//util.send_plain_msg(id, confirm_msg);
+			//setTimeout(util.send_quick_reply(id, confirm_msg, yes_no_quick_reply), 1000);
+			util.send_quick_reply(id, confirm_msg, yes_no_quick_reply);
 			break;
 		case "CREATE_CONFIRMATION":
 			user.context = user.state = "";
@@ -344,7 +305,7 @@ function create_repo(id, msg)
 			}
 			break;
 		default:
-			module.exports.delete_and_startover(id);
+			util.delete_and_startover(id);
 	}
 }
 
@@ -365,7 +326,7 @@ function create_comment(id)
 /* utility functions */
 function send_greetings(id, msg)
 {
-	module.exports.send_plain_msg(id, "Hello Sir");
+	util.send_plain_msg(id, "Hello Sir");
 }
 
 function send_response(event)
@@ -384,31 +345,4 @@ function send_response(event)
 	}
 
 	send_post_req(response);
-}
-
-function send_post_req(message)
-{
-	console.log("sending request: " + JSON.stringify(message));
-
-	var options = {
-		hostname : fb_url,
-		port : 443,
-		path : path,
-		method : 'POST',
-		headers : {
-			'Content-Type' : 'application/json'
-		}
-	};
-
-	console.log("sending response: " + JSON.stringify(options));
-
-	var req = https.request(options, function(err, res, body) {
-	});
-
-	req.on('error', function(e) {
-		console.log(`problem with request: ${e.message}`);
-	});
-
-	req.write(JSON.stringify(message));
-	req.end();
 }
