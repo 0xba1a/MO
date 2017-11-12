@@ -223,6 +223,8 @@ function get_github_username(event)
 /* Cancel current operation */
 function do_cancel(id)
 {
+	console.log ("Cancelling current operation");
+
 	var user = util.db.get(id);
 	if (user == null) {
 		util.delete_and_startover(id);
