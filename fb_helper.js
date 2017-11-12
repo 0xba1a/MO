@@ -151,7 +151,8 @@ function converse(event)
 	    }
 	} else {
 		for (entity in entities) {
-			if (((entity == "intent") && (entities[entity][0].value == "cancel")) ||
+			if ((((entity == "intent") || (entity == "action")) &&
+						(entities[entity][0].value == "cancel")) ||
 						(entity == "cancel")) {
 				do_cancel();
 				return;

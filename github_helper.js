@@ -123,6 +123,7 @@ function github_post_req(id, path, obj)
             } else if (user.context == "ISSUE") {
 				util.send_plain_msg(this.id, "Issue #" + json_obj.number + " created successfully");
 				user.issue = {};
+				user.context = user.state = "";
 				util.update_db(this.id, user);
 			}
 
