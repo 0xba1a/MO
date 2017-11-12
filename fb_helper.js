@@ -404,7 +404,7 @@ function create_comment(user, data)
 			user.state = "";
 			user.current_repo = data;
 			util.update_db(user.user_id, user);
-			create_issue(user, "");
+			create_comment(user, "");
 			return;
 		case "ISSUE_NO":
 			if (isNaN(data)) {
