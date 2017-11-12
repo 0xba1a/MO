@@ -390,7 +390,7 @@ function create_comment(user, data)
 {
 	var msg;
 
-	switch (data) {
+	switch (user.state) {
 		case "":
 			if (user.current_repo != null) {
 				user.state = "ISSUE_NO";
