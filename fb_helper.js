@@ -341,10 +341,21 @@ function create_issue(user, data)
 {
 	var msg;
 	switch (user.state) {
-		case "":
-			user.state = "TITLE";
-			msg = "Issue title please";
-			break;
+	    case "":
+	        if (user.current_repo != null) {
+	            user.state = "TITLE";
+	            msg = "Issue title please";
+	        } else {
+	            user.state = "SET_REPO";
+	            msg = "On which repo?";
+	        }
+	        break;
+		case "SET_REPO":
+			user.state = "";
+			user.current_repo = data;
+			update_db(user.id, user);
+			create_issue(user, "");
+			return;
 		case "TITLE":
 			user.issue.title = data;
 			user.state = "DESCRIPTION";

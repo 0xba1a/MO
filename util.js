@@ -15,6 +15,7 @@ module.exports = {
         var newEmptyObject = {
             "user_id": user_id,
             "username": "",
+			"current_repo": null,
             "repos": "[]",
             "stage": "NEW",
             "context": "WAITING_FOR_GITHUB_USERNAME",
