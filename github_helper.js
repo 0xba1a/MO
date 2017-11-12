@@ -112,7 +112,7 @@ function github_post_req(id, path, obj)
 
             var json_obj = JSON.parse(data);
 
-            if (user.context == "repo") {
+            if (user.context == "REPO") {
                 user.repo.github_url = json_obj.git_url;
                 util.update_db(this.id, user);
 
@@ -120,8 +120,8 @@ function github_post_req(id, path, obj)
                 util.send_plain_msg(this.id, msg);
 
                 github_add_collaborator(user.repo.name, id);
-            } else if (user.context == "issue") {
-				util.send_plain_msg(this.id, "Issue #" + json_obj.id + " created successfully");
+            } else if (user.context == "ISSUE") {
+				util.send_plain_msg(this.id, "Issue #" + json_obj.number + " created successfully");
 				user.issue = {};
 				util.update_db(this.id, user);
 			}
