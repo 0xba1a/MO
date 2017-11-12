@@ -147,7 +147,7 @@ function converse(event)
 				do_cancel(sender_id);
 				break;
 			default:
-				util.not_understood(id);
+				util.not_understood(sender_id);
 	    }
 	} else {
 		for (entity in entities) {
@@ -168,6 +168,9 @@ function converse(event)
 				break;
 			case "ISSUE":
 				create_issue(user, msg);
+				break;
+			case "COMMENT":
+				create_comment(user, msg);
 				break;
 			default:
 		}
@@ -271,7 +274,7 @@ function do_create(id, action_on, msg)
 			user.context = "COMMENT";
 			user.state = "";
 			util.update_db(id, user);
-			create_comment(id);
+			create_comment(user, "");
 			break;
 		default:
 			user.context = user.state = "";
@@ -383,8 +386,44 @@ function create_issue(user, data)
 	util.send_plain_msg(user.user_id, msg);
 }
 
-function create_comment(id)
+function create_comment(user, data)
 {
+	var msg;
+
+	switch (data) {
+		case "":
+			if (user.current_repo != null) {
+				user.state = "ISSUE_NO";
+				msg = "issue number please";
+	        } else {
+	            user.state = "SET_REPO";
+	            msg = "On which repo?";
+	        }
+			break;
+		case "SET_REPO":
+			user.state = "";
+			user.current_repo = data;
+			util.update_db(user.user_id, user);
+			create_issue(user, "");
+			return;
+		case "ISSUE_NO":
+			if (isNaN(data)) {
+				msg = "please provide a valid integer represents issue number";
+				break;
+			}
+			user.comment.on_issue = data;
+			msg = "you comment please";
+			user.state = "COMMENT";
+			break;
+		case "COMMENT":
+			user.comment.comment = data;
+			util.update_db(user.user_id, user);
+			github.add_comment(user.user_id);
+			return;
+	}
+
+	util.update_db(user.user_id, user);
+	util.send_plain_msg(user.user_id, msg);
 }
 
 /* utility functions */

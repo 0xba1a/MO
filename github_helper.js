@@ -48,6 +48,19 @@ module.exports = {
 		data.description = user.issue.description;
 		github_post_req(id, path, data);
 	},
+
+	"add_comment": function(id) {
+		var user = util.db.get(id);
+		if (user == null) {
+			util.delete_and_startover(id);
+			return;
+		}
+
+		var path = "/repos/l-fox/" + user.current_repo + "/issues/" + user.comment.on_issue + "/comments";
+		var data = {};
+		data.body = user.comment.comment;
+		github_post_req(id, path, data);
+	},
 	
 	"get_my_repo" : function() {
 		test_get_my_repo();
@@ -123,6 +136,10 @@ function github_post_req(id, path, obj)
             } else if (user.context == "ISSUE") {
 				util.send_plain_msg(this.id, "Issue #" + json_obj.number + " created successfully");
 				user.issue = {};
+				user.context = user.state = "";
+				util.update_db(this.id, user);
+			} else if (user.context == "COMMENT") {
+				util.send_plain_msg(this.id, "comment added");
 				user.context = user.state = "";
 				util.update_db(this.id, user);
 			}
