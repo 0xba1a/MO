@@ -18,7 +18,10 @@ module.exports = {
             "repos": "[]",
             "stage": "NEW",
             "context": "WAITING_FOR_GITHUB_USERNAME",
-            "state": "NEW"
+            "state": "NEW",
+			"repo": {},
+			"issue": {},
+			"comment": {}
         };
         module.exports.update_db(user_id, newEmptyObject);
         console.log("new user " + user_id + " added");

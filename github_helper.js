@@ -34,6 +34,20 @@ module.exports = {
 
 		github_post_req(id, "/user/repos", req);
 	},
+
+	"create_issue": function(id) {
+		var user = util.db.get(id);
+		if (user == null) {
+			util.delete_and_startover(id);
+			return;
+		}
+
+		var path = "/repos/l-fox/" + user.current_repo + "/issues";
+		var data = {};
+		data.title = user.issue.title;
+		data.description = user.issue.description;
+		github_post_req(id, path, data);
+	},
 	
 	"get_my_repo" : function() {
 		test_get_my_repo();
@@ -62,6 +76,16 @@ function github_post_req(id, path, obj)
 
         if (err) {
             console.error("github_post_req - error :" + err);
+			util.send_plain_msg(this.id, "Sorry. I couldn't do the operation");
+
+            var user = util.db.get(this.id);
+            if (user == null) {
+                util.delete_and_startover(this.id);
+                return;
+            }
+
+			user.repo = user.issue = user.comment = {};
+			util.update_db(this.id, user);
             return;
         }
 
@@ -87,13 +111,20 @@ function github_post_req(id, path, obj)
             }
 
             var json_obj = JSON.parse(data);
-            user.repo.github_url = json_obj.git_url;
-            util.update_db(this.id, user);
 
-            var msg = "repo created successfully. Adding you as a collaborator";
-			util.send_plain_msg(this.id, msg);
+            if (user.context == "repo") {
+                user.repo.github_url = json_obj.git_url;
+                util.update_db(this.id, user);
 
-			github_add_collaborator(user.repo.name, id);
+                var msg = "repo created successfully. Adding you as a collaborator";
+                util.send_plain_msg(this.id, msg);
+
+                github_add_collaborator(user.repo.name, id);
+            } else if (user.context == "issue") {
+				util.send_plain_msg(this.id, "Issue #" + json_obj.id + " created successfully");
+				user.issue = {};
+				util.update_db(this.id, user);
+			}
 
 		}.bind({
             "id": this.id
@@ -166,12 +197,22 @@ function github_put_req(id, path, data)
 			var added_username = json_obj.invitee.login;
 
 			if (added_username == user.username) {
-            	var msg = "repo created successfully. you can clone it from " + json_obj.git_url;
+            	var msg = "Done! Please accept collaborator request in your github account";
+            	util.send_plain_msg(this.id, msg);
+
+            	var msg = "And then you can clone it from " + user.repo.git_url;
+            	util.send_plain_msg(this.id, msg);
+
+				/* Clear repo states */
+				user.context = user.state = "";
+				user.current_repo = user.repo;
+				user.repo = {};
+				util.update_db(user);
 			} else {
 				var msg = "Error during adding you as a collaborator. Retrying...";
 				//TODO: Add retry mechanism with limit and delete repo if retry fails
+            	util.send_plain_msg(this.id, msg);
 			}
-            util.send_plain_msg(this.id, msg);
 
         }.bind({
             "id": this.id

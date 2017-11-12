@@ -162,7 +162,10 @@ function converse(event)
 				do_create(sender_id, msg.toLowerCase(), action_on);
 				break;
 			case "REPO":
-				create_repo(sender_id, msg.toLowerCase());
+				create_repo(sender_id, msg);
+				break;
+			case "ISSUE":
+				create_issue(user, msg);
 				break;
 			default:
 		}
@@ -251,7 +254,7 @@ function do_create(id, action_on, msg)
 			user.context = "ISSUE";
 			user.state = "";
 			util.update_db(id, user);
-			create_issue(id);
+			create_issue(user, "");
 			break;
 		case "comment":
 			user.context = "COMMENT";
@@ -306,7 +309,7 @@ function create_repo(id, msg)
 			user.state = "CREATE_CONFIRMATION";
 			user.repo.description = msg;
 			util.update_db(id, user);
-			var confirm_msg = "Do you want to create a repo with name " + user.repo.name;
+			var confirm_msg = "Do you want to create a repo with name " + user.repo.name + "?";
 			//util.send_plain_msg(id, confirm_msg);
 			//setTimeout(util.send_quick_reply(id, confirm_msg, yes_no_quick_reply), 1000);
 			util.send_quick_reply(id, confirm_msg, yes_no_quick_reply);
@@ -329,12 +332,35 @@ function create_repo(id, msg)
 function do_delete(sender_id, action_on)
 {
 }
+
 function do_change(sender_id, action_on)
 {
 }
-function create_issue(id)
+
+function create_issue(user, data)
 {
+	var msg;
+	switch (user.state) {
+		case "":
+			user.state = "TITLE";
+			msg = "Issue title please";
+			break;
+		case "TITLE":
+			user.issue.title = data;
+			user.state = "DESCRIPTION";
+			msg = "Describe it";
+			break;
+		case "DESCRIPTION":
+			user.issue.description = data;
+			util.update_db(user.id, user);
+			github.create_issue(user.id);
+			return;
+	}
+
+	util.update_db(user.id, user);
+	util.send_plain_msg(user.id, msg);
 }
+
 function create_comment(id)
 {
 }
