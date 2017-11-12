@@ -101,15 +101,12 @@ module.exports = {
     },
 
     "delete_and_startover": function(user_id) {
-        var user;
-
         if (!db.has(user_id)) {
-            /* Not possible */
-            return;
-        } else {
-            user = db.get(user_id);
+            /* Not possible. yet */
+			util.add_new_user(user_id);
         }
 
+        var user = db.get(user_id);
         var msg = "Sorry sir. I forget you. Lets startover";
         module.exports.send_plain_msg(user_id, msg);
 

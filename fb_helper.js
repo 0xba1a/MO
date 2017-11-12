@@ -154,7 +154,7 @@ function converse(event)
 			if ((((entity == "intent") || (entity == "action")) &&
 						(entities[entity][0].value == "cancel")) ||
 						(entity == "cancel")) {
-				do_cancel();
+				do_cancel(sender_id);
 				return;
 			}
 		}
