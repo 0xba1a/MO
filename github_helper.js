@@ -120,10 +120,10 @@ function github_add_collaborator(repo_name, id)
 	}
 
 	var path = "/repos/l-fox/" + repo_name + "/collaborators/" + user.username;
-	github_put_req(path, "");
+	github_put_req(id, path, "");
 }
 
-function github_put_req(path, data)
+function github_put_req(id, path, data)
 {
 	var username = CONST.github_username;
 	var passw = CONST.github_token;
