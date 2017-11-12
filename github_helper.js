@@ -90,7 +90,7 @@ function github_post_req(id, path, obj)
             user.repo.github_url = json_obj.git_url;
             util.update_db(this.id, user);
 
-            var msg = "repo created successfully. Adding you as a collaborator");
+            var msg = "repo created successfully. Adding you as a collaborator";
 			util.send_plain_msg(this.id, msg);
 
 			github_add_collaborator(user.repo.name, id);
@@ -136,8 +136,8 @@ function github_put_req(path, data)
 		headers : {
 			'Authorization' : auth,
 			'User-Agent': 'curl/7.47.0',
-			'Accept': '*/*'
-			'Content-length': data.length;
+			'Accept': '*/*',
+			'Content-length': data.length
 		}
 	};
 
