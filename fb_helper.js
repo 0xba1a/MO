@@ -106,6 +106,18 @@ function converse(event)
 	            case "agenda_entry":
 	                action_on = entities[entity][0].value;
 	                break;
+				case "intent":
+					intent = entities[entity][0].value;
+					break;
+				case "repo":
+					action_on = entities[entity][0].value;
+					break;
+				case "issue":
+					action_on = entities[entity][0].value;
+					break;
+				case "comment":
+					action_on = entities[entity][0].value;
+					break;
 	        }
 	    }
 		console.log("intent: " + intent);
@@ -127,10 +139,12 @@ function converse(event)
 			case "cancel":
 				do_cancel(sender_id);
 				break;
+			default:
+				util.not_understood(id);
 	    }
 	} else {
 		for (entity in entities) {
-			if ((entity == "action") && (entities[entity][0].value == "cancel")) {
+			if ((entity == "intent") && (entities[entity][0].value == "cancel")) {
 				do_cancel();
 				return;
 			}
@@ -208,6 +222,8 @@ function do_cancel(id)
 	}
 
 	user.context = user.state = "";
+	user.repo = {};
+	util.update_db(id, user);
 }
 
 /* Create related functions */

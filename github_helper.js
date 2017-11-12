@@ -90,10 +90,12 @@ function github_post_req(id, path, obj)
             user.repo.github_url = json_obj.git_url;
             util.update_db(this.id, user);
 
-            var msg = "repo created successfully. you can clone it from " + json_obj.git_url;
-            util.send_plain_msg(this.id, msg);
+            var msg = "repo created successfully. Adding you as a collaborator");
+			util.send_plain_msg(this.id, msg);
 
-        }.bind({
+			github_add_collaborator(user.repo.name, id);
+
+		}.bind({
             "id": this.id
         }));
 
@@ -108,6 +110,86 @@ function github_post_req(id, path, obj)
     req.write(JSON.stringify(obj));
     req.end();
 }
+
+function github_add_collaborator(repo_name, id)
+{
+	var user = util.db.get(id);
+	if (user == null) {
+		util.delete_and_startover(id);
+		return;
+	}
+
+	var path = "/repos/l-fox/" + repo_name + "/collaborators/" + user.username;
+	github_put_req(path, "");
+}
+
+function github_put_req(path, data)
+{
+	var username = CONST.github_username;
+	var passw = CONST.github_token;
+	var auth = 'Basic ' + new Buffer(username + ':' + passw).toString('base64');
+
+	var option = {
+		host : "api.github.com",
+		path : path,
+		method : "PUT",
+		headers : {
+			'Authorization' : auth,
+			'User-Agent': 'curl/7.47.0',
+			'Accept': '*/*'
+			'Content-length': data.length;
+		}
+	};
+
+    var req = https.request(options, function(res, err) {
+        var data = "";
+
+        if (err) {
+            console.error("github_post_req - error :" + err);
+            return;
+        }
+
+		res.on('data', function(chunk) {
+            data += chunk;
+        });
+
+        res.on('end', function() {
+            console.log("github_put_req - data: " + data);
+
+            var user = util.db.get(this.id);
+            if (user == null) {
+                util.delete_and_startover(this.id);
+                return;
+            }
+
+            var json_obj = JSON.parse(data);
+			var added_username = json_obj.invitee.login;
+
+			if (added_username == user.username) {
+            	var msg = "repo created successfully. you can clone it from " + json_obj.git_url;
+			} else {
+				var msg = "Error during adding you as a collaborator. Retrying...";
+				//TODO: Add retry mechanism with limit and delete repo if retry fails
+			}
+            util.send_plain_msg(this.id, msg);
+
+        }.bind({
+            "id": this.id
+        }));
+
+    }.bind({
+        "id": id
+    }));
+
+    req.on('error', function(e) {
+        console.log(`problem with request: ${e.message}`);
+    });
+
+    req.write(JSON.stringify(data));
+    req.end();
+
+
+ }
 
 function github_get_req(path)
 {

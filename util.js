@@ -93,7 +93,7 @@ module.exports = {
     },
 
     "not_understood": function(id) {
-        module.exports.send_plain_msg(id, "Sorry. I'm not familiar with your sofisticated language");
+        module.exports.send_plain_msg(id, "Sorry sir. I'm yet to evolve for your sofisticated language");
     },
 
     "delete_and_startover": function(user_id) {
