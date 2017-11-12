@@ -356,7 +356,7 @@ function create_issue(user, data)
 		case "SET_REPO":
 			user.state = "";
 			user.current_repo = data;
-			util.update_db(user.id, user);
+			util.update_db(user.user_id, user);
 			create_issue(user, "");
 			return;
 		case "TITLE":
@@ -366,13 +366,13 @@ function create_issue(user, data)
 			break;
 		case "DESCRIPTION":
 			user.issue.description = data;
-			util.update_db(user.id, user);
-			github.create_issue(user.id);
+			util.update_db(user.user_id, user);
+			github.create_issue(user.user_id);
 			return;
 	}
 
-	util.update_db(user.id, user);
-	util.send_plain_msg(user.id, msg);
+	util.update_db(user.user_id, user);
+	util.send_plain_msg(user.user_id, msg);
 }
 
 function create_comment(id)
