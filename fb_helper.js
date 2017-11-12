@@ -196,7 +196,10 @@ function get_github_username(event)
 		    user.context = "WAITING_FOR_GITHUB_UNAME";
 		    user.state = "ASKED";
 			util.update_db(sender_id, user);
-		    break;
+			setTimeout(function() {
+				util.send_plain_msg(this.id, msg);
+			}.bind( {"id": sender_id, "msg": msg}), 1000 );
+			return;
 		case "ASKED":
 		case "NOT_FOUND":
 			var username = event.message.text;
@@ -231,6 +234,8 @@ function do_cancel(id)
 	user.issue = {};
 	user.comment = {};
 	util.update_db(id, user);
+
+	util.send_plain_msg(id, "cancelled the current operation sir");
 }
 
 /* Create related functions */

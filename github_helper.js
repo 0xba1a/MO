@@ -76,7 +76,7 @@ function github_post_req(id, path, obj)
 
         if (err) {
             console.error("github_post_req - error :" + err);
-			util.send_plain_msg(this.id, "Sorry. I couldn't do the operation");
+			util.send_plain_msg(this.id, "Sorry. I couldn't complete the operation");
 
             var user = util.db.get(this.id);
             if (user == null) {
@@ -202,7 +202,9 @@ function github_put_req(id, path, data)
             	util.send_plain_msg(this.id, msg);
 
             	var msg = "And then you can clone it from " + user.repo.git_url;
-            	util.send_plain_msg(this.id, msg);
+				setTimeout(function() {
+					util.send_plain_msg(this.id, this.msg);
+				}.bind( {"id": this.id, "msg": msg} ), 1000);
 
 				/* Clear repo states */
 				user.context = user.state = "";
