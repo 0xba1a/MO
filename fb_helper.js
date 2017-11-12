@@ -86,6 +86,13 @@ function converse(event)
 		return;
 	}
 
+	/* Testing purpose only */
+	switch (event.message.text) {
+		case "test_get_my_repo":
+			github.get_my_repo();
+			break;
+	}
+
 	if (user.context == "") {
 
 		for (entity in entities) {
@@ -159,13 +166,6 @@ function converse(event)
 				break;
 			default:
 		}
-	}
-
-	/* Testing purpose only */
-	switch (event.message.text) {
-		case "test_get_my_repo":
-			github.get_my_repo();
-			break;
 	}
 }
 
