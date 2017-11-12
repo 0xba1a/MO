@@ -151,7 +151,8 @@ function converse(event)
 	    }
 	} else {
 		for (entity in entities) {
-			if ((entity == "intent") && (entities[entity][0].value == "cancel")) {
+			if (((entity == "intent") && (entities[entity][0].value == "cancel")) ||
+						(entity == "cancel")) {
 				do_cancel();
 				return;
 			}
@@ -226,6 +227,8 @@ function do_cancel(id)
 
 	user.context = user.state = "";
 	user.repo = {};
+	user.issue = {};
+	user.comment = {};
 	util.update_db(id, user);
 }
 
@@ -353,7 +356,7 @@ function create_issue(user, data)
 		case "SET_REPO":
 			user.state = "";
 			user.current_repo = data;
-			update_db(user.id, user);
+			util.update_db(user.id, user);
 			create_issue(user, "");
 			return;
 		case "TITLE":
