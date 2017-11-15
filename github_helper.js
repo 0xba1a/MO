@@ -179,7 +179,7 @@ function github_post_req(id, path, obj)
                         user.repo.github_url = json_obj.git_url;
                         util.update_db(this.id, user);
 
-                        if (user.state == "DESCRIPTION") {
+                        if (user.state == "CREATE_CONFIRMATION") {
                             var msg = "repo created successfully. Adding you as a collaborator";
                             util.send_plain_msg(this.id, msg);
 
