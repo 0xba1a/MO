@@ -323,14 +323,12 @@ function create_repo(id, msg)
 			user.state = "CREATE_CONFIRMATION";
 			user.repo.description = msg;
 			util.update_db(id, user);
-			var confirm_msg = "Do you want to create a repo with name " + user.repo.name + "?";
+			var confirm_msg = "Do you want to create a new repo with name " + user.repo.name + "?";
 			//util.send_plain_msg(id, confirm_msg);
 			//setTimeout(util.send_quick_reply(id, confirm_msg, yes_no_quick_reply), 1000);
 			util.send_quick_reply(id, confirm_msg, yes_no_quick_reply);
 			break;
 		case "CREATE_CONFIRMATION":
-			user.context = user.state = "";
-			util.update_db(id, user);
 			if (msg == "yes") {
 				github.create_repo(id);
 			} else {
