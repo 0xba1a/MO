@@ -82,6 +82,8 @@ function github_clone_repo(user, repo_name)
 	var cmd = "sh ./scripts/new_repo.sh " + repo_name + " " + CONST.rsa_passcode;
 	exec('cmd', function(err, stdout, stderr) {
 		//TODO: catch failure
+		console.log("stdout: " + stdout);
+		console.log("stderr: " + stderr);
 	});
 
     msg = "done. You can clone the repo from " + user.repo.github_url;
@@ -100,7 +102,6 @@ function github_add_webhook(id, repo_name)
 	var data = {};
 	data.name = "web";
 	data.config = {};
-	data.active = true;
 
 	var user = util.db.get(id);
 	if (user == null) {
@@ -114,6 +115,7 @@ function github_add_webhook(id, repo_name)
 	/* config configuration */
 	data.config.url = "https://eastrivervillage.com:3003/github_hook";
 	data.config.content_type = "json";
+	data.config.events = ["push"];
 
 	github_post_req(id, path, data);
 }
@@ -182,7 +184,6 @@ function github_post_req(id, path, obj)
                         if (user.state == "CREATE_CONFIRMATION") {
                             var msg = "repo created successfully. Adding you as a collaborator";
                             util.send_plain_msg(this.id, msg);
-
                             github_add_collaborator(user.repo.name, id);
                         } else if (user.state == "WEBHOOK_SETUP") {
 							var msg = "done. cloning the repo";
