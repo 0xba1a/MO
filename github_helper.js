@@ -102,7 +102,7 @@ function github_add_webhook(id, repo_name)
 	data.config = {};
 	data.active = true;
 
-	var user = util.get(id);
+	var user = util.db.get(id);
 	if (user == null) {
 		util.delete_and_startover(id);
 		return;
