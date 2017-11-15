@@ -97,7 +97,7 @@ module.exports = {
     },
 
     "not_understood": function(id) {
-        module.exports.send_plain_msg(id, "Sorry sir. I'm yet to evolve for your sofisticated language");
+        module.exports.send_plain_msg(id, "Sorry sir. I'm yet to evolve for your sophisticated language");
     },
 
     "delete_and_startover": function(user_id) {
@@ -115,7 +115,40 @@ module.exports = {
         module.exports.update_db(user_id, user);
         msg = "Hii sir";
         module.exports.send_plain_msg(user_id, msg);
-    }
+    },
+
+	"get_user": function(username) {
+		for (key in db.keys()) {
+			user = db.get(key);
+			if (user.username == username) {
+				return user;
+			}
+		}
+
+		return null;
+	},
+	
+	"add_commit": function(user, repo, commit_id, commit_msg) {
+		if (user.repos[repo] == undefined) {
+			user.repos[repo] = {};
+		}
+
+		if (user.repos[repo].commits == undefined) {
+			user.repos[repo].commits = [];
+		}
+
+		var commits = user.repos[repo].commits;
+		var commit = {};
+		commit.commit_id = commit_id;
+		commit.commit_msg = commit_msg;
+		commits.push(commit);
+		user.repos[repo].new_commit = true;
+		module.exports.update_db(user.user_id, user);
+	},
+
+	"pull_repo": function(repo) {
+		//TODO: yet to define
+	}
 };
 
 module.exports.db = db;

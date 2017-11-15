@@ -1,6 +1,7 @@
 const fs = require('fs');
 const https = require('https');
 const https_sync = require('sync-request');
+const exec = require('child_process').exec;
 
 var util = require('./util.js');
 
@@ -33,6 +34,7 @@ module.exports = {
 		};
 
 		github_post_req(id, "/user/repos", req);
+		//github_setup_environment(id, user.repo.name);
 	},
 
 	"create_issue": function(id) {
@@ -58,7 +60,7 @@ module.exports = {
 
 		var path = "/repos/l-fox/" + user.current_repo + "/issues/" + user.comment.on_issue + "/comments";
 		var data = {};
-		data.body = user.comment.comment;
+		data.body = user.comment.comment + " - " + user.username;
 		github_post_req(id, path, data);
 	},
 	
@@ -66,6 +68,55 @@ module.exports = {
 		test_get_my_repo();
 	}
 };
+
+//function github_setup_environment(id, repo_name)
+//{
+	//github_add_webhook(id, repo_name);
+	////github_clone_repo(repo_name);
+//}
+
+function github_clone_repo(user, repo_name)
+{
+
+    /* run expect script */
+	var cmd = "sh ./scripts/new_repo.sh " + repo_name + " " + CONST.rsa_passcode;
+	exec('cmd', function(err, stdout, stderr) {
+		//TODO: catch failure
+	});
+
+    msg = "done. You can clone the repo from " + user.repo.github_url;
+    util.send_plain_msg(user.user_id, msg);
+
+    /* Clear repo states */
+    user.context = user.state = "";
+    user.current_repo = user.repo;
+    user.repo = {};
+    util.update_db(user);
+}
+
+function github_add_webhook(id, repo_name)
+{
+	var path = "/repos/l-fox/" + repo_name + "/hooks";
+	var data = {};
+	data.name = "web";
+	data.config = {};
+	data.active = true;
+
+	var user = util.get(id);
+	if (user == null) {
+		util.delete_and_startover(id);
+		return;
+	}
+
+    user.state = "WEBHOOK_SETUP";
+    util.update_db(id, user);
+
+	/* config configuration */
+	data.config.url = "https://eastrivervillage.com:3003/github_hook";
+	data.config.content_type = "json";
+
+	github_post_req(id, path, data);
+}
 
 function github_post_req(id, path, obj)
 {
@@ -115,30 +166,35 @@ function github_post_req(id, path, obj)
         });
 
         res.on('end', function() {
-            console.log("github_post_req - data: " + data);
+                    console.log("github_post_req - data: " + data);
 
-            var user = util.db.get(this.id);
-            if (user == null) {
-                util.delete_and_startover(this.id);
-                return;
-            }
+                    var user = util.db.get(this.id);
+                    if (user == null) {
+                        util.delete_and_startover(this.id);
+                        return;
+                    }
 
-            var json_obj = JSON.parse(data);
+                    var json_obj = JSON.parse(data);
+                    if (user.context == "REPO") {
+                        user.repo.github_url = json_obj.git_url;
+                        util.update_db(this.id, user);
 
-            if (user.context == "REPO") {
-                user.repo.github_url = json_obj.git_url;
-                util.update_db(this.id, user);
+                        if (user.state == "DESCRIPTION") {
+                            var msg = "repo created successfully. Adding you as a collaborator";
+                            util.send_plain_msg(this.id, msg);
 
-                var msg = "repo created successfully. Adding you as a collaborator";
-                util.send_plain_msg(this.id, msg);
-
-                github_add_collaborator(user.repo.name, id);
-            } else if (user.context == "ISSUE") {
-				util.send_plain_msg(this.id, "Issue #" + json_obj.number + " created successfully");
-				user.issue = {};
-				user.context = user.state = "";
-				util.update_db(this.id, user);
-			} else if (user.context == "COMMENT") {
+                            github_add_collaborator(user.repo.name, id);
+                        } else if (user.state == "WEBHOOK_SETUP") {
+							var msg = "done. cloning the repo";
+							util.send_plain_msg(user.user_id, msg);
+							github_clone_repo(user, user.repo.name);
+                        }
+                    } else if (user.context == "ISSUE") {
+                        util.send_plain_msg(this.id, "Issue #" + json_obj.number + " created successfully");
+                        user.issue = {};
+                        user.context = user.state = "";
+                        util.update_db(this.id, user);
+                    } else if (user.context == "COMMENT") {
 				util.send_plain_msg(this.id, "comment added");
 				user.context = user.state = "";
 				util.update_db(this.id, user);
@@ -168,27 +224,29 @@ function github_add_collaborator(repo_name, id)
 		return;
 	}
 
+	user.state = "ADD_COLLABORATOR";
+
 	var path = "/repos/l-fox/" + repo_name + "/collaborators/" + user.username;
 	github_put_req(id, path, "");
 }
 
 function github_put_req(id, path, data)
 {
-	var username = CONST.github_username;
-	var passw = CONST.github_token;
-	var auth = 'Basic ' + new Buffer(username + ':' + passw).toString('base64');
+    var username = CONST.github_username;
+    var passw = CONST.github_token;
+    var auth = 'Basic ' + new Buffer(username + ':' + passw).toString('base64');
 
-	var options = {
-		host : "api.github.com",
-		path : path,
-		method : "PUT",
-		headers : {
-			'Authorization' : auth,
-			'User-Agent': 'curl/7.47.0',
-			'Accept': '*/*',
-			'Content-length': data.length
-		}
-	};
+    var options = {
+        host: "api.github.com",
+        path: path,
+        method: "PUT",
+        headers: {
+            'Authorization': auth,
+            'User-Agent': 'curl/7.47.0',
+            'Accept': '*/*',
+            'Content-length': data.length
+        }
+    };
 
     var req = https.request(options, function(res, err) {
         var data = "";
@@ -198,7 +256,7 @@ function github_put_req(id, path, data)
             return;
         }
 
-		res.on('data', function(chunk) {
+        res.on('data', function(chunk) {
             data += chunk;
         });
 
@@ -212,27 +270,35 @@ function github_put_req(id, path, data)
             }
 
             var json_obj = JSON.parse(data);
-			var added_username = json_obj.invitee.login;
 
-			if (added_username == user.username) {
-            	var msg = "Done! Please accept collaborator request in your github account";
-            	util.send_plain_msg(this.id, msg);
+            if ((user.context == "REPO") && (user.state == "ADD_COLLABORATOR")) {
+                var added_username = json_obj.invitee.login;
 
-            	var msg = "And then you can clone it from " + user.repo.git_url;
-				setTimeout(function() {
-					util.send_plain_msg(this.id, this.msg);
-				}.bind( {"id": this.id, "msg": msg} ), 1000);
+                if (added_username == user.username) {
+                    var msg = "Done! Please accept collaborator request in your github account";
+                    util.send_plain_msg(this.id, msg);
 
-				/* Clear repo states */
-				user.context = user.state = "";
-				user.current_repo = user.repo;
-				user.repo = {};
-				util.update_db(user);
-			} else {
-				var msg = "Error during adding you as a collaborator. Retrying...";
-				//TODO: Add retry mechanism with limit and delete repo if retry fails
-            	util.send_plain_msg(this.id, msg);
-			}
+                    setTimeout(function() {
+                    	var msg = "setting up webhooks";
+                        util.send_plain_msg(this.id, msg);
+                        //github_setup_environment(this.id, user.repo.name);
+						github_add_webhook(this.id, this.user.repo_name);
+                    }.bind({
+                        "id": this.id,
+						"user": user
+                    }), 1000);
+
+                    /* Clear repo states */
+                    //user.context = user.state = "";
+                    //user.current_repo = user.repo;
+                    //user.repo = {};
+                    //util.update_db(user);
+                } else {
+                    var msg = "Error during adding you as a collaborator. Retrying...";
+                    //TODO: Add retry mechanism with limit and delete repo if retry fails
+                    util.send_plain_msg(this.id, msg);
+                }
+            }
 
         }.bind({
             "id": this.id
@@ -248,9 +314,7 @@ function github_put_req(id, path, data)
 
     req.write(JSON.stringify(data));
     req.end();
-
-
- }
+}
 
 function github_get_req(path)
 {

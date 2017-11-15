@@ -65,7 +65,29 @@ app.get('/webhook', (req, res) => {
     
     } else {
       // Responds with '403 Forbidden' if verify tokens do not match
-      res.sendStatus(403);      
+      res.sendStatus(403);
     }
   }
+});
+
+/* Github webhook */
+app.post('/github_hook', function(req, res) {
+	var body = req.body;
+    res.status(200).send('EVENT_RECEIVED');
+
+	var jsonObj = JSON.parse(body);
+	//var username = jsonObj.comment.user.login;
+	var username = jsonObj.sender.login;
+	var repo = jsonObj.repository.name;
+	var commit_id = jsonObj.comment.commit_id;
+	var commit_msg = jsonObj.comment.body;
+
+	var user = util.get_user(username);
+	if (user == null) {
+		console.log("github_hook: can't identify user. exiting");
+		repturn;
+	}
+
+	util.add_commit(user, repo, commit_id, commit_msg);
+	util.pull_repo(repo);
 });

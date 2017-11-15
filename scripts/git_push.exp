@@ -1,0 +1,8 @@
+#!/usr/bin/expect
+#set repo_name [lindex $argv 0];
+set password [lindex $argv 0];
+#set url "git@github.com:l-fox/${repo_name}.git";
+spawn git push -u origin master
+expect "id_rsa"
+send "$password\r"
+interact
