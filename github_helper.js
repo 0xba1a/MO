@@ -80,7 +80,7 @@ function github_clone_repo(user, repo_name)
 
     /* run expect script */
 	var cmd = "sh ./scripts/new_repo.sh " + repo_name + " " + CONST.rsa_passcode;
-	exec('cmd', function(err, stdout, stderr) {
+	exec(cmd, function(err, stdout, stderr) {
 		//TODO: catch failure
 		console.log("stdout: " + stdout);
 		console.log("stderr: " + stderr);
