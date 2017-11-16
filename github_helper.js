@@ -91,7 +91,8 @@ function github_clone_repo(user, repo_name)
 
     /* Clear repo states */
     user.context = user.state = "";
-    user.current_repo = user.repo;
+    user.current_repo = user.repo.name;
+	user.repos[user.repo.name] = user.repo;
     user.repo = {};
     util.update_db(user);
 }

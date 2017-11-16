@@ -81,8 +81,8 @@ app.post('/github_hook', function(req, res) {
 	//var username = jsonObj.comment.user.login;
 	var username = jsonObj.sender.login;
 	var repo = jsonObj.repository.name;
-	var commit_id = jsonObj.comment.commit_id;
-	var commit_msg = jsonObj.comment.body;
+	var commit_id = jsonObj.commit.commit_id;
+	var commit_msg = jsonObj.commit.body;
 
 	var user = util.get_user(username);
 	if (user == null) {
