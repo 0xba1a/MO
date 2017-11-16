@@ -178,12 +178,12 @@ function github_post_req(id, path, obj)
 
                     var json_obj = JSON.parse(data);
                     if (user.context == "REPO") {
-                        user.repo.github_url = json_obj.git_url;
-                        util.update_db(this.id, user);
 
                         if (user.state == "CREATE_CONFIRMATION") {
                             var msg = "repo created successfully. Adding you as a collaborator";
                             util.send_plain_msg(this.id, msg);
+                        	user.repo.github_url = json_obj.git_url;
+                        	util.update_db(this.id, user);
                             github_add_collaborator(user.repo.name, id);
                         } else if (user.state == "WEBHOOK_SETUP") {
 							var msg = "done. cloning the repo";
@@ -283,7 +283,7 @@ function github_put_req(id, path, data)
                     	var msg = "setting up webhooks";
                         util.send_plain_msg(this.id, msg);
                         //github_setup_environment(this.id, user.repo.name);
-						github_add_webhook(this.id, this.user.repo_name);
+						github_add_webhook(this.id, this.user.repo.name);
                     }.bind({
                         "id": this.id,
 						"user": user
