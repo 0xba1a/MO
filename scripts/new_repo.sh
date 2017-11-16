@@ -11,11 +11,12 @@ cd ~/FOX/
 mkdir $repo_name
 cd $repo_name
 
-git config user.name "l-fox"
-git config user.email "kumaran127@gmail.com"
-
 echo "# ${repo_name}" >> README.md
 git init
+
+git config --local user.name "l-fox"
+git config --local user.email "kumaran127@gmail.com"
+
 git add README.md
 git commit -m "First commit by Fox"
 git remote add origin $github_url
