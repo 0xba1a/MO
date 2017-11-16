@@ -172,9 +172,79 @@ function converse(event)
 			case "COMMENT":
 				create_comment(user, msg);
 				break;
+			case "ASK_FOR_ISSUE_FIX":
+				if (msg == "yes") {
+					take_commit_and_ask_for_fix(user);
+				}
+				else {
+					util.clear_commits(user);
+				}
+				break;
+			case "ASKING_COMMITS":
+			    solve_issue_with_commit(user, msg);
+				break;
 			default:
 		}
 	}
+}
+
+function solve_issue_with_commit(user, msg)
+{
+	switch (user.state) {
+		case "ASKED":
+		    if (msg == "yes") {
+		        util.send_plain_msg(user.user_id, "which issue it solves?");
+		        user.state = "ISSUE_NUMBER_ASKED";
+		        util.update_db(user.user_id, user);
+		    } else {
+		        user.repos[current_repo].commits.splice(0, 1);
+		        if (user.repos[current_repo].commits.length == 0) {
+		            user.repos[current_repo].commits = null;
+					user.context = user.state = "";
+					util.update_db(user.user_id, user);
+		        } else {
+		            take_commit_and_ask_for_fix(user);
+		        }
+		    }
+		    break;
+		case "ISSUE_NUMBER_ASKED":
+			if (isNaN(msg)) {
+				util.send_plain_msg(user.user_id, "provide only the issue number");
+				return;
+			}
+
+			user.issue.number = msg;
+			user.state = "CLOSE_COMMENT_ASKED";
+			util.update_db(user.user_id, user);
+			util.send_plain_msg(user.user_id, "provide close description");
+			break;
+		case "CLOSE_COMMENT_ASKED":
+			user.issue.close_comment = msg;
+			user.state = "CLOSE_ISSUE";
+			util.update_db(user.user_id, user);
+			//send a call-back and call it from github function
+			//the call-back should call take_commit_and_ask_for_fix()
+			github.close_issue(user);
+			break;
+	}
+}
+
+function take_commit_and_ask_for_fix(user)
+{
+	var commits = user.repos[user.current_repo].commits;
+
+	if (commits == null) {
+		// end of recursive call
+		return;
+	}
+
+	user.context = "ASKING_COMMITS";
+	user.state = "ASKED";
+	util.update_db(user.user_id, user);
+
+	var commit = commits[0];
+	var msg = "Does the commit with commit message \"" + commit.msg + "\" solve an issue?";
+	util.send_quick_reply(user.user_id, msg, yes_no_quick_reply);
 }
 
 function get_github_username(event)

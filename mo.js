@@ -81,8 +81,8 @@ app.post('/github_hook', function(req, res) {
 	//var username = jsonObj.comment.user.login;
 	var username = jsonObj.sender.login;
 	var repo = jsonObj.repository.name;
-	var commit_id = jsonObj.commit.commit_id;
-	var commit_msg = jsonObj.commit.body;
+	var commit_id = jsonObj.head_commit.id;
+	var commit_msg = jsonObj.head_commit.message;
 
 	var user = util.get_user(username);
 	if (user == null) {
@@ -90,6 +90,6 @@ app.post('/github_hook', function(req, res) {
 		repturn;
 	}
 
-	util.add_commit(user, repo, commit_id, commit_msg);
 	util.pull_repo(repo);
+	util.add_commit(user, repo, commit_id, commit_msg);
 });

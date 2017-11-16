@@ -1,6 +1,7 @@
 const fs = require('fs');
 const https = require('https');
 const https_sync = require('sync-request');
+const exec = require('child_process').exec;
 
 var flatfile = require('flat-file-db');
 var db = flatfile.sync('./fox.db');
@@ -9,20 +10,30 @@ var CONST = JSON.parse(fs.readFileSync("./secret.json", 'UTF-8'));
 var fb_url = "graph.facebook.com";
 var path = "/v2.6/me/messages?access_token=" + CONST.page_access_token;
 
+var yes_no_quick_reply = [{
+    "content_type": "text",
+    "title": "no",
+    "payload": "no"
+}, {
+    "content_type": "text",
+    "title": "yes",
+    "payload": "yes"
+}];
+
 module.exports = {
 
     "add_new_user": function(user_id) {
         var newEmptyObject = {
             "user_id": user_id,
             "username": "",
-			"current_repo": null,
+            "current_repo": null,
             "repos": "[]",
             "stage": "NEW",
             "context": "WAITING_FOR_GITHUB_USERNAME",
             "state": "NEW",
-			"repo": {},
-			"issue": {},
-			"comment": {}
+            "repo": {},
+            "issue": {},
+            "comment": {}
         };
         module.exports.update_db(user_id, newEmptyObject);
         console.log("new user " + user_id + " added");
@@ -103,7 +114,7 @@ module.exports = {
     "delete_and_startover": function(user_id) {
         if (!db.has(user_id)) {
             /* Not possible. yet */
-			util.add_new_user(user_id);
+            util.add_new_user(user_id);
         }
 
         var user = db.get(user_id);
@@ -117,37 +128,57 @@ module.exports = {
         module.exports.send_plain_msg(user_id, msg);
     },
 
-	"get_user": function(username) {
-		for (key in db.keys()) {
-			user = db.get(key);
-			if (user.username == username) {
-				return user;
-			}
-		}
+    "get_user": function(username) {
+        for (key in db.keys()) {
+            user = db.get(key);
+            if (user.username == username) {
+                return user;
+            }
+        }
 
-		return null;
-	},
-	
-	"add_commit": function(user, repo, commit_id, commit_msg) {
-		if (user.repos[repo] == undefined) {
-			user.repos[repo] = {};
-		}
+        return null;
+    },
 
-		if (user.repos[repo].commits == undefined) {
+    "add_commit": function(user, repo, commit_id, commit_msg) {
+
+		if (user.repos[repo].commits == null) {
 			user.repos[repo].commits = [];
 		}
 
-		var commits = user.repos[repo].commits;
-		var commit = {};
-		commit.commit_id = commit_id;
-		commit.commit_msg = commit_msg;
-		commits.push(commit);
-		user.repos[repo].new_commit = true;
-		module.exports.update_db(user.user_id, user);
-	},
+		var commit_obj = {"id": commit_id, "msg": commit_msg};
+		user.repos[repo].commits.push(commit_obj);
 
-	"pull_repo": function(repo) {
-		//TODO: yet to define
+		if (user.context == "ASK_FOR_ISSUE_CLOSURE") {
+			//Do nothing if user didn't answer for previous question
+			return;
+		}
+		else {
+		    //TODO: Verify there are open issues
+		    var msg = "You recently made new commits. Do they fix any issues?";
+		    module.exports.send_quick_reply(user.user_id, msg, yes_no_quick_reply);
+		    user.context = "ASK_FOR_ISSUE_CLOSURE";
+		    module.exports.update_db(user.user_id, user);
+		}
+
+    },
+
+    "pull_repo": function(repo) {
+        var cmd = "sh ~/MO/scripts/repo_pull.sh " + repo + " " + CONST.rsa_passcode;
+        exec(cmd, function(err, stdout, stderr) {
+            //TODO: catch failure
+            console.log("stdout: " + stdout);
+            console.log("stderr: " + stderr);
+        });
+    },
+
+	"clear_commits": function(user) {
+		if (user.current_repo == null) {
+			//can't possible - FATAL
+		}
+
+		user.context = "";
+		user.repos[user.current_repo].commits = null;
+		module.exports.update_db(user.user_id, user);
 	}
 };
 
