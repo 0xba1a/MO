@@ -179,13 +179,19 @@ module.exports = {
     },
 
 	"clear_commits": function(user) {
+		
+		user.context = "";
+
 		if (user.current_repo == null) {
 			//can't possible - FATAL
-		}
+			console.log("current_repo is empty. can't happen");
+			return;
+			}
+			else {
+			    user.repos[user.current_repo].commits = null;
+			}
 
-		user.context = "";
-		user.repos[user.current_repo].commits = null;
-		module.exports.update_db(user.user_id, user);
+			module.exports.update_db(user.user_id, user);
 	}
 };
 

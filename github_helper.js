@@ -209,7 +209,7 @@ function github_rest_req(id, path, obj, method)
                 if (user.state == "CREATE_CONFIRMATION") {
                     var msg = "repo created successfully. Adding you as a collaborator";
                     util.send_plain_msg(this.id, msg);
-                    user.repo.github_url = json_obj.git_url;
+                    user.repo.github_url = json_obj.ssh_url;
                     util.update_db(this.id, user);
                     github_add_collaborator(user.repo.name, id);
                 } else if (user.state == "WEBHOOK_SETUP") {

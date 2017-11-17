@@ -98,6 +98,11 @@ function converse(event)
 				console.log("key: " + keys[i]);
 			}
 			return;
+		case "print_db":
+			console.log(JSON.stringify(util.db.get(sender.id)));
+			return;
+		default:
+			break;
 	}
 
 	if (user.context == "") {
