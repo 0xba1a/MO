@@ -98,6 +98,7 @@ function github_clone_repo(user, repo_name)
 
     /* Clear repo states */
     user.context = user.state = "";
+	//TODO: If current repo is different, remove all commits stored for action
     user.current_repo = user.repo.name;
 	user.repos[user.repo.name] = user.repo;
 	user.repos[user.repo.name].commits = null;
