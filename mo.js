@@ -8,7 +8,8 @@ const
 	bodyParser = require('body-parser'),
 	fs = require('fs'),
 	app = express().use(bodyParser.json()),
-	fb = require('./fb_helper.js');
+	fb = require('./fb_helper.js'),
+	util = require('./util.js');
 
 app.listen(PORT, function() {
 	CONST = JSON.parse(fs.readFileSync("./secret.json", 'UTF-8'));
@@ -78,7 +79,11 @@ app.post('/github_hook', function(req, res) {
 	console.log("github_hook - body: " + JSON.stringify(body));
 	//var jsonObj = JSON.parse(body);
 	var jsonObj = body;
-	//var username = jsonObj.comment.user.login;
+
+	if (jsonObj.head_commit == undefined) {
+		return;
+	}
+
 	var username = jsonObj.sender.login;
 	var repo = jsonObj.repository.name;
 	var commit_id = jsonObj.head_commit.id;
@@ -87,7 +92,7 @@ app.post('/github_hook', function(req, res) {
 	var user = util.get_user(username);
 	if (user == null) {
 		console.log("github_hook: can't identify user. exiting");
-		repturn;
+		return;
 	}
 
 	util.pull_repo(repo);

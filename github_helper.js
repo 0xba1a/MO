@@ -101,9 +101,10 @@ function github_clone_repo(user, repo_name)
 	//TODO: If current repo is different, remove all commits stored for action
     user.current_repo = user.repo.name;
 	user.repos[user.repo.name] = user.repo;
+	console.log(JSON.stringify(user));
 	user.repos[user.repo.name].commits = null;
     user.repo = {};
-    util.update_db(user);
+    util.update_db(user.user_id, user);
 }
 
 function github_add_webhook(id, repo_name)

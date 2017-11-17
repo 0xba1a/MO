@@ -27,7 +27,7 @@ module.exports = {
             "user_id": user_id,
             "username": "",
             "current_repo": null,
-            "repos": "[]",
+            "repos": {},
             "stage": "NEW",
             "context": "WAITING_FOR_GITHUB_USERNAME",
             "state": "NEW",
@@ -130,7 +130,13 @@ module.exports = {
 
     "get_user": function(username) {
         for (key in db.keys()) {
+			console.log("key: " + key);
             user = db.get(key);
+			
+			if (user == undefined) {
+				continue;
+			}
+
             if (user.username == username) {
                 return user;
             }
