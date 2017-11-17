@@ -90,7 +90,13 @@ function converse(event)
 	switch (event.message.text) {
 		case "test_get_my_repo":
 			github.get_my_repo();
-			break;
+			return;
+		case "test_db":
+			console.log(JSON.stringify(util.db.keys()));
+			for (key in util.db.keys()) {
+				console.log("key: " + key);
+			}
+			return;
 	}
 
 	if (user.context == "") {
