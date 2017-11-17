@@ -99,7 +99,7 @@ function converse(event)
 			}
 			return;
 		case "print_db":
-			console.log(JSON.stringify(util.db.get(sender.id)));
+			console.log(JSON.stringify(util.db.get(sender_id)));
 			return;
 		default:
 			break;
