@@ -184,7 +184,7 @@ function converse(event)
 			case "COMMENT":
 				create_comment(user, msg);
 				break;
-			case "ASK_FOR_ISSUE_FIX":
+			case "ASK_FOR_ISSUE_CLOSURE":
 				if (msg == "yes") {
 					take_commit_and_ask_for_fix(user);
 				}
