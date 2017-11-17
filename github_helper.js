@@ -63,17 +63,24 @@ module.exports = {
 		data.body = user.comment.comment + " - " + user.username;
 		github_post_req(id, path, data);
 	},
+
+	"close_issue": function(id) {
+		var user = util.db.get(id);
+		if (user == null) {
+			util.delete_and_startover(id);
+			return;
+		}
+
+		user.comment.comment = user.issue.close_comment;
+		user.comment.on_issue = user.issue.number;
+		util.update_db(id, user);
+		module.exports.add_comment(id);
+	},
 	
 	"get_my_repo" : function() {
 		test_get_my_repo();
 	}
 };
-
-//function github_setup_environment(id, repo_name)
-//{
-	//github_add_webhook(id, repo_name);
-	////github_clone_repo(repo_name);
-//}
 
 function github_clone_repo(user, repo_name)
 {
@@ -122,6 +129,123 @@ function github_add_webhook(id, repo_name)
 	github_post_req(id, path, data);
 }
 
+function github_close_issue(id)
+{
+	var user = util.db.get(id);
+	if (user == null) {
+		util.delete_and_startover(id);
+		return;
+	}
+
+	var path = "/repos/" + user.username + "/" + user.current_repo + "/issues/" + user.issue.number;
+	var data = {};
+	data.state = "closed";
+	github_rest_req(id, path, data, "PATCH");
+}
+
+// TODO: move post and put request to this function.
+// Need to combine responses
+function github_rest_req(id, path, obj, method)
+{
+    var username = CONST.github_username;
+    var passw = CONST.github_token;
+    var auth = 'Basic ' + new Buffer(username + ':' + passw).toString('base64');
+
+    var options = {
+        host: "api.github.com",
+        path: path,
+        method: method,
+        headers: {
+            'Authorization': auth,
+            'User-Agent': 'curl/7.47.0',
+            'Accept': '*/*'
+        }
+    };
+
+    var req = https.request(options, function(res, err) {
+        var data = "";
+
+        if (err) {
+            console.error("github_post_req - error :" + err);
+            util.send_plain_msg(this.id, "Sorry. I couldn't complete the operation");
+
+            var user = util.db.get(this.id);
+            if (user == null) {
+                util.delete_and_startover(this.id);
+                return;
+            }
+
+            user.repo = user.issue = user.comment = {};
+            util.update_db(this.id, user);
+            return;
+        }
+
+        //console.log("github - https.request: " + data);
+        //var json_obj = JSON.parse(data);
+        //user.repo.github_url = json_obj.github_url;
+        //util.update_db(this.id, user);
+
+        //var msg = "repo created successfully. you can clone it from " + json_obj.github_url;
+        //fb.send_plain_msg(this.id, msg);
+
+        res.on('data', function(chunk) {
+            data += chunk;
+        });
+
+        res.on('end', function() {
+            console.log("github_post_req - data: " + data);
+
+            var user = util.db.get(this.id);
+            if (user == null) {
+                util.delete_and_startover(this.id);
+                return;
+            }
+
+            var json_obj = JSON.parse(data);
+            if (user.context == "REPO") {
+
+                if (user.state == "CREATE_CONFIRMATION") {
+                    var msg = "repo created successfully. Adding you as a collaborator";
+                    util.send_plain_msg(this.id, msg);
+                    user.repo.github_url = json_obj.git_url;
+                    util.update_db(this.id, user);
+                    github_add_collaborator(user.repo.name, id);
+                } else if (user.state == "WEBHOOK_SETUP") {
+                    var msg = "done. cloning the repo";
+                    util.send_plain_msg(user.user_id, msg);
+                    github_clone_repo(user, user.repo.name);
+                }
+            } else if (user.context == "ISSUE") {
+                util.send_plain_msg(this.id, "Issue #" + json_obj.number + " created successfully");
+                user.issue = {};
+                user.context = user.state = "";
+                util.update_db(this.id, user);
+            } else if (user.context == "COMMENT") {
+                util.send_plain_msg(this.id, "comment added");
+                user.context = user.state = "";
+                util.update_db(this.id, user);
+            } else if (user.context == "ASKING_COMMITS") {
+				user.state = "CLOSING_ISSUE";
+				util.update_db(this.id, user);
+				github_close_issue(this.id);
+			}
+
+        }.bind({
+            "id": this.id
+        }));
+
+    }.bind({
+        "id": id
+    }));
+
+    req.on('error', function(e) {
+        console.log(`problem with request: ${e.message}`);
+    });
+
+    req.write(JSON.stringify(obj));
+    req.end();
+}
+
 function github_post_req(id, path, obj)
 {
     var username = CONST.github_username;
@@ -144,7 +268,7 @@ function github_post_req(id, path, obj)
 
         if (err) {
             console.error("github_post_req - error :" + err);
-			util.send_plain_msg(this.id, "Sorry. I couldn't complete the operation");
+            util.send_plain_msg(this.id, "Sorry. I couldn't complete the operation");
 
             var user = util.db.get(this.id);
             if (user == null) {
@@ -152,8 +276,8 @@ function github_post_req(id, path, obj)
                 return;
             }
 
-			user.repo = user.issue = user.comment = {};
-			util.update_db(this.id, user);
+            user.repo = user.issue = user.comment = {};
+            util.update_db(this.id, user);
             return;
         }
 
@@ -170,40 +294,44 @@ function github_post_req(id, path, obj)
         });
 
         res.on('end', function() {
-                    console.log("github_post_req - data: " + data);
+            console.log("github_post_req - data: " + data);
 
-                    var user = util.db.get(this.id);
-                    if (user == null) {
-                        util.delete_and_startover(this.id);
-                        return;
-                    }
+            var user = util.db.get(this.id);
+            if (user == null) {
+                util.delete_and_startover(this.id);
+                return;
+            }
 
-                    var json_obj = JSON.parse(data);
-                    if (user.context == "REPO") {
+            var json_obj = JSON.parse(data);
+            if (user.context == "REPO") {
 
-                        if (user.state == "CREATE_CONFIRMATION") {
-                            var msg = "repo created successfully. Adding you as a collaborator";
-                            util.send_plain_msg(this.id, msg);
-                        	user.repo.github_url = json_obj.git_url;
-                        	util.update_db(this.id, user);
-                            github_add_collaborator(user.repo.name, id);
-                        } else if (user.state == "WEBHOOK_SETUP") {
-							var msg = "done. cloning the repo";
-							util.send_plain_msg(user.user_id, msg);
-							github_clone_repo(user, user.repo.name);
-                        }
-                    } else if (user.context == "ISSUE") {
-                        util.send_plain_msg(this.id, "Issue #" + json_obj.number + " created successfully");
-                        user.issue = {};
-                        user.context = user.state = "";
-                        util.update_db(this.id, user);
-                    } else if (user.context == "COMMENT") {
-				util.send_plain_msg(this.id, "comment added");
-				user.context = user.state = "";
+                if (user.state == "CREATE_CONFIRMATION") {
+                    var msg = "repo created successfully. Adding you as a collaborator";
+                    util.send_plain_msg(this.id, msg);
+                    user.repo.github_url = json_obj.git_url;
+                    util.update_db(this.id, user);
+                    github_add_collaborator(user.repo.name, id);
+                } else if (user.state == "WEBHOOK_SETUP") {
+                    var msg = "done. cloning the repo";
+                    util.send_plain_msg(user.user_id, msg);
+                    github_clone_repo(user, user.repo.name);
+                }
+            } else if (user.context == "ISSUE") {
+                util.send_plain_msg(this.id, "Issue #" + json_obj.number + " created successfully");
+                user.issue = {};
+                user.context = user.state = "";
+                util.update_db(this.id, user);
+            } else if (user.context == "COMMENT") {
+                util.send_plain_msg(this.id, "comment added");
+                user.context = user.state = "";
+                util.update_db(this.id, user);
+            } else if (user.context == "ASKING_COMMITS") {
+				user.state = "CLOSING_ISSUE";
 				util.update_db(this.id, user);
+				github_close_issue(this.id);
 			}
 
-		}.bind({
+        }.bind({
             "id": this.id
         }));
 

@@ -224,7 +224,7 @@ function solve_issue_with_commit(user, msg)
 			util.update_db(user.user_id, user);
 			//send a call-back and call it from github function
 			//the call-back should call take_commit_and_ask_for_fix()
-			github.close_issue(user);
+			github.close_issue(user.user_id);
 			break;
 	}
 }
