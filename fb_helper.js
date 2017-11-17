@@ -93,8 +93,9 @@ function converse(event)
 			return;
 		case "test_db":
 			console.log(JSON.stringify(util.db.keys()));
-			for (key in util.db.keys()) {
-				console.log("key: " + key);
+			var keys = util.db.keys();
+			for (i = 0; i < keys.length; i++) {
+				console.log("key: " + keys[i]);
 			}
 			return;
 	}

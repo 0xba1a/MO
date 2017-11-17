@@ -129,9 +129,10 @@ module.exports = {
     },
 
     "get_user": function(username) {
-        for (key in db.keys()) {
-			console.log("key: " + key);
-            user = db.get(key);
+		var keys = db.keys();
+        for (var i = 0; i < keys.length; i++) {
+			console.log("key: " + keys[i]);
+            user = db.get(keys[i]);
 			
 			if (user == undefined) {
 				continue;
