@@ -97,7 +97,7 @@ module.exports = {
 	"delete_all_repos": function(id)
 	{
 		path = "/user/repos";
-		user = db.get(id);
+		user = util.db.get(id);
 		user.context = "DELETE_ALL_REPOS";
 		user.state = "GET_ALL_REPOS";
 		util.update_db(id, user);
@@ -250,6 +250,9 @@ function github_rest_req(id, path, obj, method)
 				for (repo in json_obj)
 				{
 					var path = "/repos/l-fox/" + repo.name;
+					console.log("*****");
+					console.log("delete: " + repo.name);
+					console.log("*****");
 					//github_rest_req(this.id, path, "", "DELETE");
 					setTimeout(rest_req.rest_req(this.id, path, data, "DELETE"), i * 1000);
 					i++;
