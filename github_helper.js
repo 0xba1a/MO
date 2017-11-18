@@ -322,8 +322,9 @@ function github_rest_req(id, path, obj, method)
 	if ((method == "POST") || (method == "PUT"))
 	{
 		req.write(JSON.stringify(obj));
-		req.end();
 	}
+
+	req.end();
 }
 
 function github_post_req(id, path, obj)
