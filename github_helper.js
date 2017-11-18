@@ -256,6 +256,7 @@ function github_rest_req(id, path, obj, method)
 					console.log("*****");
 					setTimeout(function() {
 						var path = "/repos/l-fox/" + this.repo_name;
+						console.log("Deleting: " + path);
 						github_rest_req(this.id, this.path, "", "DELETE");
 					}.bind({
 						"id": this.id,
