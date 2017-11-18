@@ -485,7 +485,23 @@ function create_repo(id, msg)
 
 
 function do_delete(sender_id, action_on)
-{}
+{
+	var user = util.db.get(sender_id);
+	if (user == null) {
+		util.delete_and_startover(sender_id);
+		return;
+	}
+
+	switch (action_on) {
+		case "issue":
+			// Hack
+			user.context = "ASKING_COMMITS";
+			user.state = "ASKED";
+			util.update_db(user.user_id, user);
+			solve_issue_with_commit(user, "yes");
+			break;
+	}
+}
 
 function do_change(sender_id, action_on)
 {}
