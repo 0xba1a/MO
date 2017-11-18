@@ -223,6 +223,7 @@ function github_rest_req(id, path, obj, method)
 
 		res.on('data', function(chunk)
 		{
+			console.log("CHUNK: " + chunk);
 			data += chunk;
 		});
 
