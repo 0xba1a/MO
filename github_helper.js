@@ -303,9 +303,29 @@ function github_rest_req(id, path, obj, method)
 			}
 			else if (user.context == "ASKING_COMMITS")
 			{
-				user.state = "CLOSING_ISSUE";
-				util.update_db(this.id, user);
-				github_close_issue(this.id);
+				switch (user.state)
+				{
+					case "CLOSE_ISSUE":
+						user.state = "CLOSING_ISSUE";
+						util.update_db(this.id, user);
+						github_close_issue(this.id);
+						break;
+					case "CLOSING_ISSUE":
+						util.send_plain_msg(user.user_id, "issue #" + user.issue.number + " is closed");
+						var current_repo = user.current_repo;
+						user.repos[current_repo].commits.splice(0, 1);
+						if (user.repos[current_repo].commits.length == 0)
+						{
+							user.repos[current_repo].commits = null;
+							user.context = user.state = "";
+							util.update_db(user.user_id, user);
+						}
+						else
+						{
+							take_commit_and_ask_for_fix(user);
+						}
+						break;
+				}
 			}
 
 		}.bind(
@@ -333,6 +353,9 @@ function github_rest_req(id, path, obj, method)
 
 function github_post_req(id, path, obj)
 {
+	github_rest_req(id, path, obj, "POST");
+	return;
+
 	var username = CONST.github_username;
 	var passw = CONST.github_token;
 	var auth = 'Basic ' + new Buffer(username + ':' + passw).toString('base64');

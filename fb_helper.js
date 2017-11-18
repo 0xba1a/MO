@@ -209,9 +209,16 @@ function converse(event)
 				{
 					take_commit_and_ask_for_fix(user);
 				}
-				else
+				else if (msg == "no")
 				{
 					util.clear_commits(user);
+				}
+				else
+				{
+					user.context = user.state = "";
+					util.update_db(user.user_id, user);
+					converse(event);
+					return;
 				}
 				break;
 			case "ASKING_COMMITS":
@@ -264,8 +271,6 @@ function solve_issue_with_commit(user, msg)
 			user.issue.close_comment = msg;
 			user.state = "CLOSE_ISSUE";
 			util.update_db(user.user_id, user);
-			//send a call-back and call it from github function
-			//the call-back should call take_commit_and_ask_for_fix()
 			github.close_issue(user.user_id);
 			break;
 	}
@@ -278,6 +283,8 @@ function take_commit_and_ask_for_fix(user)
 	if (commits == null)
 	{
 		// end of recursive call
+		user.context = user.state = "";
+		util.update_db(user.user_id, user);
 		return;
 	}
 

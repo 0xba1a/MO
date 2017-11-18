@@ -76,7 +76,7 @@ app.post('/github_hook', function(req, res) {
 	var body = req.body;
     res.status(200).send('EVENT_RECEIVED');
 
-	console.log("github_hook - body: " + JSON.stringify(body));
+	//console.log("github_hook - body: " + JSON.stringify(body));
 	//var jsonObj = JSON.parse(body);
 	var jsonObj = body;
 
