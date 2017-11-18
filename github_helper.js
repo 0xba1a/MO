@@ -192,6 +192,7 @@ function github_rest_req(id, path, obj, method)
 		}
 	};
 
+	console.log("rest req - options: " + JSON.stringify(options));
 	var req = https.request(options, function(res, err)
 	{
 		var data = "";
