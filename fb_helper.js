@@ -394,6 +394,7 @@ function do_create(id, action_on, msg)
 			util.update_db(id, user);
 			create_comment(user, "");
 			break;
+		case "CHANGE_CURRENT_REPO":
 		default:
 			user.context = user.state = "";
 			util.update_db(id, user);
@@ -461,6 +462,14 @@ function create_repo(id, msg)
 				do_cancel(id);
 			}
 			break;
+
+		// change current repo
+		case "CHANGE_CURRENT_REPO":
+			user.current_repo = msg;
+			user.context = user.state = "";
+			util.update_db(user.user_id, user);
+			util.send_plain_msg(user.user_id, "current repo updated successfully");
+			break;
 		default:
 			util.delete_and_startover(id);
 	}
@@ -487,7 +496,23 @@ function do_delete(sender_id, action_on)
 }
 
 function do_change(sender_id, action_on)
-{}
+{
+	user = util.db.get(sender_id);
+	if (user == null)
+	{
+		util.delete_and_startover(sender_id);
+		return;
+	}
+
+	switch (action_on) {
+		case "repo":
+			user.context = "REPO";
+			user.state = "CHANGE_CURRENT_REPO";
+			util.update_db(user.user_id, user);
+			util.send_plain_msg(user.user_id, "tell a repo which will be set as current repo");
+			break;
+	}
+}
 
 function create_issue(user, data)
 {
