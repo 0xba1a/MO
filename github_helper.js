@@ -319,6 +319,7 @@ function github_rest_req(id, path, obj, method)
 							user.repos[current_repo].commits = null;
 							user.context = user.state = "";
 							util.update_db(user.user_id, user);
+							util.send_plain_msg(user.user_id, "No more pending commits");
 						}
 						else
 						{
@@ -343,7 +344,7 @@ function github_rest_req(id, path, obj, method)
 		console.log(`problem with request: ${e.message}`);
 	});
 
-	if ((method == "POST") || (method == "PUT"))
+	if ((method == "POST") || (method == "PUT") || (method == "PATHC"))
 	{
 		req.write(JSON.stringify(obj));
 	}
