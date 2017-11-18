@@ -97,6 +97,7 @@ module.exports = {
 	"delete_all_repos": function(id)
 	{
 		path = "/user/repos";
+		data = "";
 		user = util.db.get(id);
 		user.context = "DELETE_ALL_REPOS";
 		user.state = "GET_ALL_REPOS";
@@ -245,7 +246,9 @@ function github_rest_req(id, path, obj, method)
 						github_rest_req(id, path, data, method);
 					}
 				};
+
 				var i = 1;
+				var data = "";
 
 				for (repo in json_obj)
 				{
