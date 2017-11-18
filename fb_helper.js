@@ -245,6 +245,7 @@ function solve_issue_with_commit(user, msg)
 			}
 			else
 			{
+				var current_repo = user.current_repo;
 				user.repos[current_repo].commits.splice(0, 1);
 				if (user.repos[current_repo].commits.length == 0)
 				{

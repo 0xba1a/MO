@@ -166,7 +166,7 @@ function github_close_issue(id)
 		return;
 	}
 
-	var path = "/repos/" + user.username + "/" + user.current_repo + "/issues/" + user.issue.number;
+	var path = "/repos/l-fox" + "/" + user.current_repo + "/issues/" + user.issue.number;
 	var data = {};
 	data.state = "closed";
 	github_rest_req(id, path, data, "PATCH");
