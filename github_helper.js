@@ -322,7 +322,7 @@ function github_rest_req(id, path, obj, method)
 						}
 						else
 						{
-							take_commit_and_ask_for_fix(user);
+							util.take_commit_and_ask_for_fix(user);
 						}
 						break;
 				}

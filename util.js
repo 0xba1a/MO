@@ -192,7 +192,29 @@ module.exports = {
 			}
 
 			module.exports.update_db(user.user_id, user);
+	},
+
+	// Moved for easier access - avoiding some callback setup to fb
+	"take_commit_and_ask_for_fix": function(user)
+	{
+		var commits = user.repos[user.current_repo].commits;
+
+		if (commits == null)
+		{
+			// end of recursive call
+			user.context = user.state = "";
+			util.update_db(user.user_id, user);
+			return;
+		}
+
+		user.context = "ASKING_COMMITS";
+		user.state = "ASKED";
+		module.exports.update_db(user.user_id, user);
+
+		var commit = commits[0];
+		var msg = "Does the commit with commit message \"" + commit.msg + "\" solve an issue?";
+		module.exports.send_quick_reply(user.user_id, msg, yes_no_quick_reply);
 	}
-};
+	};
 
 module.exports.db = db;

@@ -112,6 +112,9 @@ function converse(event)
 		case "delete_all_repos":
 			github.delete_all_repos(sender_id);
 			return;
+		case "startover":
+			util.delete_and_startover(sender_id);
+			return;
 		default:
 			break;
 	}
@@ -207,7 +210,7 @@ function converse(event)
 			case "ASK_FOR_ISSUE_CLOSURE":
 				if (msg == "yes")
 				{
-					take_commit_and_ask_for_fix(user);
+					util.take_commit_and_ask_for_fix(user);
 				}
 				else if (msg == "no")
 				{
@@ -251,7 +254,7 @@ function solve_issue_with_commit(user, msg)
 				}
 				else
 				{
-					take_commit_and_ask_for_fix(user);
+					util.take_commit_and_ask_for_fix(user);
 				}
 			}
 			break;
@@ -276,26 +279,6 @@ function solve_issue_with_commit(user, msg)
 	}
 }
 
-function take_commit_and_ask_for_fix(user)
-{
-	var commits = user.repos[user.current_repo].commits;
-
-	if (commits == null)
-	{
-		// end of recursive call
-		user.context = user.state = "";
-		util.update_db(user.user_id, user);
-		return;
-	}
-
-	user.context = "ASKING_COMMITS";
-	user.state = "ASKED";
-	util.update_db(user.user_id, user);
-
-	var commit = commits[0];
-	var msg = "Does the commit with commit message \"" + commit.msg + "\" solve an issue?";
-	util.send_quick_reply(user.user_id, msg, yes_no_quick_reply);
-}
 
 function get_github_username(event)
 {
