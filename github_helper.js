@@ -228,7 +228,7 @@ function github_rest_req(id, path, obj, method)
 
 		res.on('end', function()
 		{
-			console.log("github_post_req - data: " + data);
+			console.log("github_rest_req - data: " + data);
 
 			var user = util.db.get(this.id);
 			if (user == null)
@@ -242,7 +242,8 @@ function github_rest_req(id, path, obj, method)
 			if (user.context == "DELETE_ALL_REPOS")
 			{
 				var rest_req = {
-					"rest_req" : function(id, path, data, method) {
+					"rest_req": function(id, path, data, method)
+					{
 						github_rest_req(id, path, data, method);
 					}
 				};
@@ -318,8 +319,11 @@ function github_rest_req(id, path, obj, method)
 		console.log(`problem with request: ${e.message}`);
 	});
 
-	req.write(JSON.stringify(obj));
-	req.end();
+	if ((method == "POST") || (method == "PUT"))
+	{
+		req.write(JSON.stringify(obj));
+		req.end();
+	}
 }
 
 function github_post_req(id, path, obj)
