@@ -250,7 +250,6 @@ function github_rest_req(id, path, obj, method)
 				};
 
 				var i = 1;
-				var data = "";
 
 				for (repo in json_obj)
 				{
@@ -259,7 +258,7 @@ function github_rest_req(id, path, obj, method)
 					console.log("delete: " + repo.name);
 					console.log("*****");
 					//github_rest_req(this.id, path, "", "DELETE");
-					setTimeout(rest_req.rest_req(this.id, path, data, "DELETE"), i * 1000);
+					setTimeout(rest_req.rest_req(this.id, path, "", "DELETE"), i * 1000);
 					i++;
 				}
 				user.context = user.state = "";
