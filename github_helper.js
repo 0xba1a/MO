@@ -238,23 +238,28 @@ function github_rest_req(id, path, obj, method)
 				return;
 			}
 
-			var json_obj = JSON.parse(data);
+			var json_obj;
+			try {
+				json_obj = JSON.parse(data);
+			}
+			catch (e) {
+				return;
+			}
 
 			if (user.context == "DELETE_ALL_REPOS")
 			{
 				for (var i = 0; i < json_obj.length; i++)
 				{
 					var repo = json_obj[i];
-					var path = "/repos/l-fox/" + repo.name;
 					console.log("*****");
 					console.log("delete: " + repo.name);
 					console.log("*****");
-					//github_rest_req(this.id, path, "", "DELETE");
 					setTimeout(function() {
+						var path = "/repos/l-fox/" + this.repo_name;
 						github_rest_req(this.id, this.path, "", "DELETE");
 					}.bind({
 						"id": this.id,
-						"path": path
+						"repo_name": repo.name
 					}), i * 1000);
 					i++;
 				}
