@@ -467,6 +467,7 @@ function create_repo(id, msg)
 		case "CHANGE_CURRENT_REPO":
 			user.current_repo = msg;
 			user.context = user.state = "";
+			user.repos[msg] = {};
 			util.update_db(user.user_id, user);
 			util.send_plain_msg(user.user_id, "current repo updated successfully");
 			break;
