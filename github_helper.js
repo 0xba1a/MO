@@ -242,23 +242,20 @@ function github_rest_req(id, path, obj, method)
 
 			if (user.context == "DELETE_ALL_REPOS")
 			{
-				var rest_req = {
-					"rest_req": function(id, path, data, method)
-					{
-						github_rest_req(id, path, data, method);
-					}
-				};
-
-				var i = 1;
-
-				for (repo in json_obj)
+				for (var i = 0; i < json_obj.length; i++)
 				{
+					var repo = json_obj[i];
 					var path = "/repos/l-fox/" + repo.name;
 					console.log("*****");
 					console.log("delete: " + repo.name);
 					console.log("*****");
 					//github_rest_req(this.id, path, "", "DELETE");
-					setTimeout(rest_req.rest_req(this.id, path, "", "DELETE"), i * 1000);
+					setTimeout(function() {
+						github_rest_req(this.id, this.path, "", "DELETE");
+					}.bind({
+						"id": this.id,
+						"path": path
+					}), i * 1000);
 					i++;
 				}
 				user.context = user.state = "";
