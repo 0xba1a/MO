@@ -256,11 +256,12 @@ module.exports = {
 		var cmd = "make test";
 		exec(cmd, function(err, stdout, stderr) {
 			if (err) {
-				module.exports.send_plain_msg(id, "test failed");
+				module.exports.send_plain_msg(id, "test sequence failed");
 				return;
 			}
 
 			exec("echo $?", function(err, stdout, stderr) {
+				console.log(stdout);
 				var msg;
 				if (stdout == 0) {
 					msg = "test passed";

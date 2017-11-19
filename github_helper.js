@@ -319,7 +319,13 @@ function github_rest_req(id, path, obj, method)
 							user.repos[current_repo].commits = null;
 							user.context = user.state = "";
 							util.update_db(user.user_id, user);
-							util.send_plain_msg(user.user_id, "No more pending commits");
+							setTimeout(function()
+							{
+								util.send_plain_msg(this.user.user_id, "No more pending commits");
+							}.bind(
+							{
+								"user": user
+							}), 1000);
 						}
 						else
 						{
