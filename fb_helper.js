@@ -176,6 +176,9 @@ function converse(event)
 			case "cancel":
 				do_cancel(sender_id);
 				break;
+			case "test":
+				do_test(sender_id);
+				break;
 			default:
 				util.not_understood(sender_id);
 		}
@@ -337,6 +340,15 @@ function get_github_username(event)
 	}
 
 	util.send_plain_msg(sender_id, msg);
+}
+
+function do_test(id)
+{
+	util.send_plain_msg(id, "test sequence initialized");
+	setTimeout(function()
+	{
+		util.run_test(id);
+	}, 1000);
 }
 
 /* Cancel current operation */

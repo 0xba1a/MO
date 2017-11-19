@@ -323,7 +323,13 @@ function github_rest_req(id, path, obj, method)
 						}
 						else
 						{
-							util.take_commit_and_ask_for_fix(user);
+							setTimeout(function()
+							{
+								util.take_commit_and_ask_for_fix(this.user);
+							}.bind(
+							{
+								"user": user
+							}), 1000);
 						}
 						break;
 				}

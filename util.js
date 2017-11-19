@@ -250,6 +250,28 @@ module.exports = {
 		var commit = commits[0];
 		var msg = "Does the commit with commit message \"" + commit.msg + "\" solve an issue?";
 		module.exports.send_quick_reply(user.user_id, msg, yes_no_quick_reply);
+	},
+
+	"run_test": function(id) {
+		var cmd = "make test";
+		exec(cmd, function(err, stdout, stderr) {
+			if (err) {
+				module.exports.send_plain_msg(id, "test failed");
+				return;
+			}
+
+			exec("echo $?", function(err, stdout, stderr) {
+				var msg;
+				if (stdout == 0) {
+					msg = "test passed";
+				}
+				else {
+					msg = "test failed";
+				}
+
+				module.exports.send_plain_msg(id, msg);
+			});
+		});
 	}
 };
 
