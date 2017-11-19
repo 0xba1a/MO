@@ -356,7 +356,7 @@ function github_rest_req(id, path, obj, method)
 		console.log(`problem with request: ${e.message}`);
 	});
 
-	if ((method == "POST") || (method == "PUT") || (method == "PATHC"))
+	if ((method == "POST") || (method == "PUT") || (method == "PATCH"))
 	{
 		req.write(JSON.stringify(obj));
 	}
