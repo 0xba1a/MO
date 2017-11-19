@@ -55,7 +55,7 @@ module.exports = {
 		var path = "/repos/l-fox/" + user.current_repo + "/issues";
 		var data = {};
 		data.title = user.issue.title;
-		data.description = user.issue.description;
+		data.body = user.issue.description;
 		github_post_req(id, path, data);
 	},
 
