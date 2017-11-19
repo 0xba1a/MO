@@ -253,7 +253,7 @@ module.exports = {
 	},
 
 	"run_test": function(id) {
-		var cmd = "make test";
+		var cmd = "./scripts/test.sh " + user.current_repo;
 		exec(cmd, function(err, stdout, stderr) {
 			if (err) {
 				module.exports.send_plain_msg(id, "test sequence failed");
@@ -261,7 +261,7 @@ module.exports = {
 			}
 
 			exec("echo $?", function(err, stdout, stderr) {
-				console.log(stdout);
+				console.log("run_test stdout: " + stdout);
 				var msg;
 				if (stdout == 0) {
 					msg = "test passed";
